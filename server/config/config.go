@@ -1,6 +1,12 @@
 package config
 
-import "os"
+import (
+	"os"
+
+	"github.com/joho/godotenv"
+
+	"bookcabin/util/logger"
+)
 
 type Config struct {
 	ServicePort string
@@ -11,7 +17,13 @@ type Config struct {
 	DBName      string
 }
 
-func LoadConfig() *Config {
+func LoadConfig() (*Config, error) {
+	err := godotenv.Load()
+	if err != nil {
+		logger.WithError(err).Error("Failed to load .env file")
+		return nil, err
+	}
+
 	return &Config{
 		ServicePort: "8080",
 		DBHost:      os.Getenv("DB_HOST"),
@@ -19,5 +31,5 @@ func LoadConfig() *Config {
 		DBUser:      os.Getenv("DB_USER"),
 		DBPassword:  os.Getenv("DB_PASSWORD"),
 		DBName:      os.Getenv("DB_NAME"),
-	}
+	}, nil
 }

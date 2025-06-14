@@ -1,4 +1,4 @@
-package models
+package dto
 
 type HealthCheckResponse struct {
 	Status string `json:"status"`
@@ -25,14 +25,12 @@ type PassengerSeatMap struct {
 }
 
 type SeatMap struct {
-	ID                 int     `json:"id,omitempty"`
 	RowsDisabledCauses string  `json:"rowsDisabledCauses"`
 	AirCraft           string  `json:"aircraft"`
 	Cabins             []Cabin `json:"cabins"`
 }
 
 type Cabin struct {
-	ID          int       `json:"id,omitempty"`
 	Deck        string    `json:"deck"`
 	SeatColumns []string  `json:"seatColumns"`
 	SeatRows    []SeatRow `json:"seatRows"`
@@ -41,14 +39,12 @@ type Cabin struct {
 }
 
 type SeatRow struct {
-	ID        int      `json:"id,omitempty"`
 	RowNumber int      `json:"rowNumber"`
 	SeatCodes []string `json:"seatCodes"`
 	Seats     []Seat   `json:"seats"`
 }
 
 type Seat struct {
-	ID                     int       `json:"id,omitempty"`
 	StorefrontSlotCode     string    `json:"storefrontSlotCode"`
 	Available              bool      `json:"available"`
 	Code                   string    `json:"code,omitempty"`
@@ -78,7 +74,6 @@ type Price struct {
 }
 
 type Passenger struct {
-	ID                  int              `json:"id,omitempty"`
 	PassengerIndex      int              `json:"passengerIndex"`
 	PassengerNameNumber string           `json:"passengerNameNumber"`
 	PassengerDetails    PassengerDetails `json:"passengerDetails"`

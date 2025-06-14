@@ -7,7 +7,12 @@ import (
 )
 
 func main() {
-	cfg := config.LoadConfig()
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to load config")
+		return
+	}
+
 	repo, err := repository.NewBookCabinRepository(&repository.RepoConfig{
 		DBConfig: repository.DBConfig{
 			User:     cfg.DBUser,

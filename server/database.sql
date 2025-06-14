@@ -1,6 +1,8 @@
 CREATE TABLE `aircrafts` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
-  `code` varchar(10)
+  `code` varchar(10),
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `cabins` (
@@ -8,19 +10,25 @@ CREATE TABLE `cabins` (
   `aircraft_id` int,
   `deck` varchar(10),
   `first_row` int,
-  `last_row` int
+  `last_row` int,
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `seat_columns` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `cabin_id` int,
-  `column_code` varchar(5)
+  `column_code` varchar(5),
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `seat_rows` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `cabin_id` int,
-  `row_number` int
+  `row_number` int,
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `seats` (
@@ -29,19 +37,25 @@ CREATE TABLE `seats` (
   `code` varchar(5),
   `storefront_slot_code` varchar(20),
   `refund_indicator` varchar(5),
-  `free_of_charge` boolean
+  `free_of_charge` boolean,
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `seat_characteristics` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `seat_id` int,
-  `characteristic` varchar(50)
+  `characteristic` varchar(50),
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `raw_seat_characteristics` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `seat_id` int,
-  `raw_characteristic` varchar(50)
+  `raw_characteristic` varchar(50),
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `passengers` (
@@ -63,19 +77,25 @@ CREATE TABLE `passengers` (
   `issuing_country` varchar(5),
   `country_of_birth` varchar(5),
   `document_type` varchar(5),
-  `nationality` varchar(5)
+  `nationality` varchar(5),
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `passenger_emails` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `passenger_id` int,
-  `email` varchar(255)
+  `email` varchar(255),
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `passenger_phones` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `passenger_id` int,
-  `phone_number` varchar(50)
+  `phone_number` varchar(50),
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `frequent_flyers` (
@@ -83,26 +103,34 @@ CREATE TABLE `frequent_flyers` (
   `passenger_id` int,
   `airline` varchar(10),
   `number` varchar(50),
-  `tier_number` int
+  `tier_number` int,
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `special_preferences` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `passenger_id` int,
   `meal_preference` varchar(100),
-  `seat_preference` varchar(100)
+  `seat_preference` varchar(100),
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `special_requests` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `preference_id` int,
-  `request` varchar(255)
+  `request` varchar(255),
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `special_service_request_remarks` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `preference_id` int,
-  `remark` varchar(255)
+  `remark` varchar(255),
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `bookings` (
@@ -119,7 +147,9 @@ CREATE TABLE `bookings` (
   `duration` int,
   `layover_duration` int,
   `segment_ref` varchar(50),
-  `subject_to_government_approval` boolean
+  `subject_to_government_approval` boolean,
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `booking_flights` (
@@ -130,13 +160,17 @@ CREATE TABLE `booking_flights` (
   `airline_code` varchar(10),
   `operating_airline_code` varchar(10),
   `departure_terminal` varchar(50),
-  `arrival_terminal` varchar(50)
+  `arrival_terminal` varchar(50),
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `booking_flight_stop_airports` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `flight_id` int,
-  `airport_code` varchar(10)
+  `airport_code` varchar(10),
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 CREATE TABLE `booking_seats` (
@@ -155,7 +189,9 @@ CREATE TABLE `booking_seats` (
   `tax_currency` varchar(5),
   `total_amount` decimal(10,2),
   `total_currency` varchar(5),
-  `originally_selected` boolean
+  `originally_selected` boolean,
+  `created_at` datetime,
+  `updated_at` datetime
 );
 
 ALTER TABLE `cabins` ADD FOREIGN KEY (`aircraft_id`) REFERENCES `aircrafts` (`id`);
