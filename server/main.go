@@ -4,6 +4,7 @@ import (
 	"bookcabin/config"
 	"bookcabin/repository"
 	"bookcabin/util/logger"
+	"fmt"
 )
 
 func main() {
@@ -28,4 +29,6 @@ func main() {
 	}
 	defer repo.Close()
 
+	repo.HealthCheck()
+	fmt.Println("Repository health check passed")
 }
