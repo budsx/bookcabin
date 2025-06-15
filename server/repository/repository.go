@@ -3,13 +3,14 @@ package repository
 import (
 	"bookcabin/repository/mysql"
 	"bookcabin/repository/repoiface"
+	"context"
 	"fmt"
 	"io"
 	"time"
 )
 
 type Repository struct {
-	dbReadWriter repoiface.DBReadWriter
+	DBReadWriter repoiface.DBReadWriter
 	io.Closer
 }
 
@@ -41,14 +42,14 @@ func NewBookCabinRepository(cfg *RepoConfig) (*Repository, error) {
 	}
 
 	return &Repository{
-		dbReadWriter: db,
+		DBReadWriter: db,
 	}, nil
 }
 
 func (r *Repository) Close() error {
-	return r.dbReadWriter.Close()
+	return r.DBReadWriter.Close()
 }
 
 func (r *Repository) HealthCheck() error {
-	return r.dbReadWriter.Ping()
+	return r.DBReadWriter.Ping(context.Background())
 }

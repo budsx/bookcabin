@@ -25,21 +25,21 @@ type PassengerSeatMap struct {
 }
 
 type SeatMap struct {
-	RowsDisabledCauses string  `json:"rowsDisabledCauses"`
-	AirCraft           string  `json:"aircraft"`
-	Cabins             []Cabin `json:"cabins"`
+	RowsDisabledCauses []string `json:"rowsDisabledCauses"`
+	AirCraft           string   `json:"aircraft"`
+	Cabins             []Cabin  `json:"cabins"`
 }
 
 type Cabin struct {
 	Deck        string    `json:"deck"`
 	SeatColumns []string  `json:"seatColumns"`
 	SeatRows    []SeatRow `json:"seatRows"`
-	FirstRow    int       `json:"firstRow"`
-	LastRow     int       `json:"lastRow"`
+	FirstRow    int32     `json:"firstRow"`
+	LastRow     int32     `json:"lastRow"`
 }
 
 type SeatRow struct {
-	RowNumber int      `json:"rowNumber"`
+	RowNumber int32    `json:"rowNumber"`
 	SeatCodes []string `json:"seatCodes"`
 	Seats     []Seat   `json:"seats"`
 }

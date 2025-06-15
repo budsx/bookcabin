@@ -1,4 +1,11 @@
 # BookCabin Assesment
 
-- Seat Map for Flights
--
+## TODO
+
+- [ ] Database Design
+- [ ] Insert Data
+- [ ] Create Endpoint Get SeatMap
+- [ ] Create Endpoint to 
+- [ ] Create Frontend
+- [ ] Integrate Backend
+

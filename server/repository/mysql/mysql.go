@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
@@ -50,11 +51,11 @@ func (d *dbReadWriter) Close() error {
 	return nil
 }
 
-func (d *dbReadWriter) Ping() error {
+func (d *dbReadWriter) Ping(ctx context.Context) error {
 	if d.db == nil {
 		return sql.ErrConnDone
 	}
-	return d.db.Ping()
+	return d.db.PingContext(ctx)
 }
 
 func (d *dbReadWriter) rollbackTx(tx *sql.Tx) error {
