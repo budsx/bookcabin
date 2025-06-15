@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	"bookcabin/models"
+	"github.com/budsx/bookcabin/models"
 )
 
 type DBReadWriter interface {

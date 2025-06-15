@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"bookcabin/util/logger"
+	"github.com/budsx/bookcabin/util/logger"
 )
 
 type dbReadWriter struct {

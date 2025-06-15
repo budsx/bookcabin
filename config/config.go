@@ -5,7 +5,7 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"bookcabin/util/logger"
+	"github.com/budsx/bookcabin/util/logger"
 )
 
 type Config struct {

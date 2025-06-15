@@ -1,12 +1,13 @@
 package repository
 
 import (
-	"bookcabin/repository/mysql"
-	"bookcabin/repository/repoiface"
 	"context"
 	"fmt"
 	"io"
 	"time"
+
+	"github.com/budsx/bookcabin/repository/mysql"
+	"github.com/budsx/bookcabin/repository/repoiface"
 )
 
 type Repository struct {

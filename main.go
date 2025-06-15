@@ -1,13 +1,14 @@
 package main
 
 import (
-	"bookcabin/config"
-	"bookcabin/dto"
-	"bookcabin/models"
-	"bookcabin/repository"
-	"bookcabin/util/logger"
 	"encoding/json"
 	"net/http"
+
+	"github.com/budsx/bookcabin/config"
+	"github.com/budsx/bookcabin/dto"
+	"github.com/budsx/bookcabin/models"
+	"github.com/budsx/bookcabin/repository"
+	"github.com/budsx/bookcabin/util/logger"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -161,7 +162,7 @@ func main() {
 				RawCharacteristic: rawSeatCharacteristic.RawCharacteristic,
 			})
 		}
-		
+
 		cabinsDTO := make([]dto.Cabin, 0)
 		for _, cabin := range cabins {
 			cabinsDTO = append(cabinsDTO, dto.Cabin{

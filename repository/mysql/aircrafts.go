@@ -1,8 +1,9 @@
 package mysql
 
 import (
-	"bookcabin/models"
 	"context"
+
+	"github.com/budsx/bookcabin/models"
 )
 
 const (
@@ -16,7 +17,7 @@ const (
 		SELECT id, cabin_id, column_code, created_at, updated_at FROM seat_columns WHERE cabin_id = ?
 	`
 	selectSeatRowsByCabinID = "SELECT id, cabin_id, `row_number`, created_at, updated_at FROM seat_rows WHERE cabin_id = ?"
-	
+
 	selectSeatsBySeatRowID = `
 		SELECT id, seat_row_id, code, storefront_slot_code, refund_indicator, free_of_charge, created_at, updated_at FROM seats WHERE seat_row_id = ?
 	`
@@ -98,10 +99,10 @@ func (d *dbReadWriter) ReadSeatRowsByCabinID(ctx context.Context, cabinID int32)
 	for rows.Next() {
 		var seatRow models.SeatRow
 		err := rows.Scan(
-			&seatRow.ID, 
-			&seatRow.CabinID, 
-			&seatRow.RowNumber, 
-			&seatRow.CreatedAt, 
+			&seatRow.ID,
+			&seatRow.CabinID,
+			&seatRow.RowNumber,
+			&seatRow.CreatedAt,
 			&seatRow.UpdatedAt,
 		)
 		if err != nil {
