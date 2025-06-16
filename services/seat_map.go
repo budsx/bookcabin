@@ -19,14 +19,14 @@ func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.Se
 	}
 
 	// Read Cabins
-	cabins, err := s.repo.DBReadWriter.ReadCabinsByAircraftID(ctx, int32(aircraft.ID))
+	cabins, err := s.repo.DBReadWriter.ReadCabinsByAircraftID(ctx, aircraft.ID)
 	if err != nil {
 		s.logger.Error("Failed to read cabins by aircraft id", zap.Error(err))
 		return seatMapResponse, err
 	}
-	cabinsIDs := make([]int32, 0)
+	cabinsIDs := make([]int64, 0)
 	for _, cabin := range cabins {
-		cabinsIDs = append(cabinsIDs, int32(cabin.ID))
+		cabinsIDs = append(cabinsIDs, cabin.ID)
 	}
 
 	// Read Seat Columns
@@ -46,13 +46,9 @@ func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.Se
 		s.logger.Error("Failed to read seat rows by cabin ids", zap.Error(err))
 		return seatMapResponse, err
 	}
-	seatRowsIDs := make([]int32, 0)
-	seatRowsDTO := make([]dto.SeatRow, 0)
+	seatRowsIDs := make([]int64, 0)
 	for _, seatRow := range seatRows {
-		seatRowsIDs = append(seatRowsIDs, int32(seatRow.ID))
-		seatRowsDTO = append(seatRowsDTO, dto.SeatRow{
-			RowNumber: seatRow.RowNumber,
-		})
+		seatRowsIDs = append(seatRowsIDs, seatRow.ID)
 	}
 
 	// Read Seats
@@ -61,9 +57,9 @@ func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.Se
 		s.logger.Error("Failed to read seats by seat row ids", zap.Error(err))
 		return seatMapResponse, err
 	}
-	seatsIDs := make([]int32, 0)
+	seatsIDs := make([]int64, 0)
 	for _, seat := range seats {
-		seatsIDs = append(seatsIDs, int32(seat.ID))
+		seatsIDs = append(seatsIDs, seat.ID)
 	}
 
 	// Read Seat Characteristics
@@ -80,11 +76,57 @@ func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.Se
 		return seatMapResponse, err
 	}
 
-	// Read Seat Codes
-	seatCodes, err := s.repo.DBReadWriter.ReadSeatCodesBySeatRowIDs(ctx, seatRowsIDs)
-	if err != nil {
-		s.logger.Error("Failed to read seat codes by seat row ids", zap.Error(err))
-		return seatMapResponse, err
+	seatRowsDTO := make([]dto.SeatRow, 0)
+	for _, seatRow := range seatRows {
+		// Get seat codes for this row from seats data
+		rowSeatCodes := make([]string, 0)
+		codesMap := make(map[string]bool)
+
+		// Get seats for this row
+		rowSeats := make([]dto.Seat, 0)
+		for _, seat := range seats {
+			if seat.SeatRowID == seatRow.ID {
+				if seat.StorefrontSlotCode != "" && !codesMap[seat.StorefrontSlotCode] {
+					rowSeatCodes = append(rowSeatCodes, seat.StorefrontSlotCode)
+					codesMap[seat.StorefrontSlotCode] = true
+				}
+
+				// Get seat characteristics for this seat
+				seatChars := make([]string, 0)
+				for _, char := range seatCharacteristics {
+					if char.SeatID == seat.ID {
+						seatChars = append(seatChars, char.Characteristic)
+					}
+				}
+
+				// Get raw seat characteristics for this seat
+				rawSeatChars := make([]string, 0)
+				for _, rawChar := range rawSeatCharacteristics {
+					if rawChar.SeatID == seat.ID {
+						rawSeatChars = append(rawSeatChars, rawChar.RawCharacteristic)
+					}
+				}
+
+				rowSeats = append(rowSeats, dto.Seat{
+					StorefrontSlotCode:     seat.StorefrontSlotCode,
+					Available:              seat.Available,
+					Code:                   seat.Code,
+					Entitled:               seat.Entitled,
+					FeeWaived:              seat.FeeWaived,
+					SeatCharacteristics:    seatChars,
+					RefundIndicator:        seat.RefundIndicator,
+					FreeOfCharge:           seat.FreeOfCharge,
+					OriginallySelected:     seat.OriginallySelected,
+					RawSeatCharacteristics: rawSeatChars,
+				})
+			}
+		}
+
+		seatRowsDTO = append(seatRowsDTO, dto.SeatRow{
+			RowNumber: seatRow.RowNumber,
+			SeatCodes: rowSeatCodes,
+			Seats:     rowSeats,
+		})
 	}
 
 	// Convert To DTO
@@ -100,6 +142,7 @@ func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.Se
 	}
 
 	// Read Passenger
+	// TODO: Get passenger id from request / context / token
 	passenger, err := s.repo.DBReadWriter.ReadPassengerByID(ctx, 1)
 	if err != nil {
 		s.logger.Error("Failed to read passenger by id", zap.Error(err))

@@ -18,20 +18,22 @@ const (
 	selectSeatColumnsByCabinIDs = `
 		SELECT id, cabin_id, column_code, created_at, updated_at FROM seat_columns WHERE cabin_id IN (%s)
 	`
-	selectSeatRowsByCabinID = "SELECT id, cabin_id, `row_number`, created_at, updated_at FROM seat_rows WHERE cabin_id = ?"
+	selectSeatRowsByCabinIDs = "SELECT id, cabin_id, `row_number`, created_at, updated_at FROM seat_rows WHERE cabin_id IN (%s)"
 
-	selectSeatsBySeatRowID = `
-		SELECT id, seat_row_id, code, storefront_slot_code, refund_indicator, free_of_charge, created_at, updated_at FROM seats WHERE seat_row_id = ?
+	selectSeatsBySeatRowIDs = `
+		SELECT id, seat_row_id, code, storefront_slot_code, refund_indicator, free_of_charge, available, designations, entitled, 
+		fee_waived, entitled_rule_id, fee_waived_rule_id, limitations, originally_selected, created_at, updated_at 
+		FROM seats WHERE seat_row_id IN (%s)
 	`
-	selectSeatCharacteristicsBySeatID = `
-		SELECT id, seat_id, characteristic, created_at, updated_at FROM seat_characteristics WHERE seat_id = ?
+	selectSeatCharacteristicsBySeatIDs = `
+		SELECT id, seat_id, characteristic, created_at, updated_at FROM seat_characteristics WHERE seat_id IN (%s)
 	`
-	selectRawSeatCharacteristicsBySeatID = `
-		SELECT id, seat_id, raw_characteristic, created_at, updated_at FROM raw_seat_characteristics WHERE seat_id = ?
+	selectRawSeatCharacteristicsBySeatIDs = `
+		SELECT id, seat_id, raw_characteristic, created_at, updated_at FROM raw_seat_characteristics WHERE seat_id IN (%s)
 	`
 
 	selectSeatCodesBySeatRowID = `
-		SELECT DISTINCT storefront_slot_code FROM seats WHERE seat_row_id = ?
+		SELECT DISTINCT storefront_slot_code FROM seats WHERE seat_row_id IN (%s)
 	`
 )
 
@@ -56,7 +58,7 @@ func (d *dbReadWriter) ReadAircraftsByCode(ctx context.Context, code string) (mo
 	return aircraft, nil
 }
 
-func (d *dbReadWriter) ReadCabinsByAircraftID(ctx context.Context, aircraftID int32) ([]models.Cabin, error) {
+func (d *dbReadWriter) ReadCabinsByAircraftID(ctx context.Context, aircraftID int64) ([]models.Cabin, error) {
 	rows, err := d.db.QueryContext(ctx, selectCabinsByAircraftID, aircraftID)
 	if err != nil {
 		return nil, err
@@ -80,7 +82,7 @@ func (d *dbReadWriter) ReadCabinsByAircraftID(ctx context.Context, aircraftID in
 	return cabins, nil
 }
 
-func (d *dbReadWriter) ReadSeatColumnsByCabinIDs(ctx context.Context, cabinIDs []int32) ([]models.SeatColumn, error) {
+func (d *dbReadWriter) ReadSeatColumnsByCabinIDs(ctx context.Context, cabinIDs []int64) ([]models.SeatColumn, error) {
 	inClause := buildInClause(len(cabinIDs))
 	query := fmt.Sprintf(selectSeatColumnsByCabinIDs, inClause)
 
@@ -112,8 +114,15 @@ func (d *dbReadWriter) ReadSeatColumnsByCabinIDs(ctx context.Context, cabinIDs [
 	return seatColumns, nil
 }
 
-func (d *dbReadWriter) ReadSeatRowsByCabinID(ctx context.Context, cabinID int32) ([]models.SeatRow, error) {
-	rows, err := d.db.QueryContext(ctx, selectSeatRowsByCabinID, cabinID)
+func (d *dbReadWriter) ReadSeatRowsByCabinIDs(ctx context.Context, cabinIDs []int64) ([]models.SeatRow, error) {
+	inClause := buildInClause(len(cabinIDs))
+	query := fmt.Sprintf(selectSeatRowsByCabinIDs, inClause)
+
+	args := make([]interface{}, len(cabinIDs))
+	for i, id := range cabinIDs {
+		args[i] = id
+	}
+	rows, err := d.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -142,8 +151,16 @@ func (d *dbReadWriter) ReadSeatRowsByCabinID(ctx context.Context, cabinID int32)
 	return seatRows, nil
 }
 
-func (d *dbReadWriter) ReadSeatsBySeatRowID(ctx context.Context, seatRowID int32) ([]models.Seat, error) {
-	rows, err := d.db.QueryContext(ctx, selectSeatsBySeatRowID, seatRowID)
+func (d *dbReadWriter) ReadSeatsBySeatRowIDs(ctx context.Context, seatRowIDs []int64) ([]models.Seat, error) {
+	inClause := buildInClause(len(seatRowIDs))
+	query := fmt.Sprintf(selectSeatsBySeatRowIDs, inClause)
+
+	args := make([]interface{}, len(seatRowIDs))
+	for i, id := range seatRowIDs {
+		args[i] = id
+	}
+
+	rows, err := d.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +169,24 @@ func (d *dbReadWriter) ReadSeatsBySeatRowID(ctx context.Context, seatRowID int32
 	var seats []models.Seat
 	for rows.Next() {
 		var seat models.Seat
-		err := rows.Scan(&seat.ID, &seat.SeatRowID, &seat.Code, &seat.StorefrontSlotCode, &seat.RefundIndicator, &seat.FreeOfCharge, &seat.CreatedAt, &seat.UpdatedAt)
+		err := rows.Scan(
+			&seat.ID, 
+			&seat.SeatRowID, 
+			&seat.Code, 
+			&seat.StorefrontSlotCode, 
+			&seat.RefundIndicator, 
+			&seat.FreeOfCharge, 
+			&seat.Available, 
+			&seat.Designations, 
+			&seat.Entitled, 
+			&seat.FeeWaived, 
+			&seat.EntitledRuleID, 
+			&seat.FeeWaivedRuleID, 
+			&seat.Limitations, 
+			&seat.OriginallySelected, 
+			&seat.CreatedAt, 
+			&seat.UpdatedAt,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -166,8 +200,15 @@ func (d *dbReadWriter) ReadSeatsBySeatRowID(ctx context.Context, seatRowID int32
 	return seats, nil
 }
 
-func (d *dbReadWriter) ReadSeatCharacteristicsBySeatID(ctx context.Context, seatID int32) ([]models.SeatCharacteristic, error) {
-	rows, err := d.db.QueryContext(ctx, selectSeatCharacteristicsBySeatID, seatID)
+func (d *dbReadWriter) ReadSeatCharacteristicsBySeatIDs(ctx context.Context, seatIDs []int64) ([]models.SeatCharacteristic, error) {
+	inClause := buildInClause(len(seatIDs))
+	query := fmt.Sprintf(selectSeatCharacteristicsBySeatIDs, inClause)
+
+	args := make([]interface{}, len(seatIDs))
+	for i, id := range seatIDs {
+		args[i] = id
+	}
+	rows, err := d.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -190,8 +231,15 @@ func (d *dbReadWriter) ReadSeatCharacteristicsBySeatID(ctx context.Context, seat
 	return seatCharacteristics, nil
 }
 
-func (d *dbReadWriter) ReadRawSeatCharacteristicsBySeatID(ctx context.Context, seatID int32) ([]models.RawSeatCharacteristic, error) {
-	rows, err := d.db.QueryContext(ctx, selectRawSeatCharacteristicsBySeatID, seatID)
+func (d *dbReadWriter) ReadRawSeatCharacteristicsBySeatIDs(ctx context.Context, seatIDs []int64) ([]models.RawSeatCharacteristic, error) {
+	inClause := buildInClause(len(seatIDs))
+	query := fmt.Sprintf(selectRawSeatCharacteristicsBySeatIDs, inClause)
+
+	args := make([]interface{}, len(seatIDs))
+	for i, id := range seatIDs {
+		args[i] = id
+	}
+	rows, err := d.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -214,8 +262,15 @@ func (d *dbReadWriter) ReadRawSeatCharacteristicsBySeatID(ctx context.Context, s
 	return rawSeatCharacteristics, nil
 }
 
-func (d *dbReadWriter) ReadSeatCodesBySeatRowID(ctx context.Context, seatRowID int32) ([]string, error) {
-	rows, err := d.db.QueryContext(ctx, selectSeatCodesBySeatRowID, seatRowID)
+func (d *dbReadWriter) ReadSeatCodesBySeatRowIDs(ctx context.Context, seatRowIDs []int64) ([]string, error) {
+	inClause := buildInClause(len(seatRowIDs))
+	query := fmt.Sprintf(selectSeatCodesBySeatRowID, inClause)
+
+	args := make([]interface{}, len(seatRowIDs))
+	for i, id := range seatRowIDs {
+		args[i] = id
+	}
+	rows, err := d.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

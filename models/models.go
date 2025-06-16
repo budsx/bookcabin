@@ -11,7 +11,7 @@ type Aircraft struct {
 
 type Cabin struct {
 	ID         int64
-	AircraftID int32
+	AircraftID int64
 	Deck       string
 	FirstRow   int32
 	LastRow    int32
@@ -21,7 +21,7 @@ type Cabin struct {
 
 type SeatColumn struct {
 	ID         int64
-	CabinID    int32
+	CabinID    int64
 	ColumnCode string
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
@@ -29,7 +29,7 @@ type SeatColumn struct {
 
 type SeatRow struct {
 	ID        int64
-	CabinID   int32
+	CabinID   int64
 	RowNumber int32
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -37,18 +37,26 @@ type SeatRow struct {
 
 type Seat struct {
 	ID                 int64
-	SeatRowID          int32
+	SeatRowID          int64
 	Code               string
 	StorefrontSlotCode string
 	RefundIndicator    string
 	FreeOfCharge       bool
+	Available          bool
+	Designations       string
+	Entitled           bool
+	FeeWaived          bool
+	EntitledRuleID     string
+	FeeWaivedRuleID    string
+	Limitations        string
+	OriginallySelected bool
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
 }
 
 type SeatCharacteristic struct {
 	ID             int64
-	SeatID         int32
+	SeatID         int64
 	Characteristic string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
@@ -56,7 +64,7 @@ type SeatCharacteristic struct {
 
 type RawSeatCharacteristic struct {
 	ID                int64
-	SeatID            int32
+	SeatID            int64
 	RawCharacteristic string
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
@@ -88,7 +96,7 @@ type Passenger struct {
 
 type PassengerEmail struct {
 	ID          int64
-	PassengerID int32
+	PassengerID int64
 	Email       string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -96,7 +104,7 @@ type PassengerEmail struct {
 
 type PassengerPhone struct {
 	ID          int64
-	PassengerID int32
+	PassengerID int64
 	PhoneNumber string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -104,7 +112,7 @@ type PassengerPhone struct {
 
 type FrequentFlyer struct {
 	ID          int64
-	PassengerID int32
+	PassengerID int64
 	Airline     string
 	Number      string
 	TierNumber  int32
@@ -114,7 +122,7 @@ type FrequentFlyer struct {
 
 type SpecialPreference struct {
 	ID             int64
-	PassengerID    int32
+	PassengerID    int64
 	MealPreference string
 	SeatPreference string
 	CreatedAt      time.Time
@@ -123,7 +131,7 @@ type SpecialPreference struct {
 
 type SpecialRequest struct {
 	ID           int64
-	PreferenceID int32
+	PreferenceID int64
 	Request      string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
@@ -131,7 +139,7 @@ type SpecialRequest struct {
 
 type SpecialServiceRequestRemark struct {
 	ID           int64
-	PreferenceID int32
+	PreferenceID int64
 	Remark       string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
