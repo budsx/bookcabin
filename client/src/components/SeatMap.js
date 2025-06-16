@@ -4,7 +4,6 @@ import './SeatMap.css';
 const SeatMap = ({ data }) => {
   const [selectedSeat, setSelectedSeat] = useState(null);
 
-  // Extract seat map data from the nested structure
   const seatMapData = data?.seatsItineraryParts?.[0]?.segmentSeatMaps?.[0]?.passengerSeatMaps?.[0]?.seatMap;
   const cabin = seatMapData?.cabins?.[0];
 
@@ -31,7 +30,6 @@ const SeatMap = ({ data }) => {
           classes.push('available');
         }
         
-        // Add characteristic classes
         if (seat.seatCharacteristics?.includes('W')) {
           classes.push('window');
         }
@@ -74,7 +72,7 @@ const SeatMap = ({ data }) => {
         {seat.storefrontSlotCode === 'SEAT' ? (
           <span className="seat-label">{seat.code}</span>
         ) : seat.storefrontSlotCode === 'AISLE' ? (
-          <span className="aisle-label">|</span>
+          <span className="aisle-label"></span>
         ) : null}
       </div>
     );
@@ -104,10 +102,10 @@ const SeatMap = ({ data }) => {
           <div className="seat window"></div>
           <span>Window</span>
         </div>
-        <div className="legend-item">
+        {/* <div className="legend-item">
           <div className="seat aisle"></div>
           <span>Aisle</span>
-        </div>
+        </div> */}
       </div>
 
       {selectedSeat && (
@@ -134,7 +132,7 @@ const SeatMap = ({ data }) => {
           <div className="column-headers">
             {cabin.seatColumns.map((column, index) => (
               <div key={index} className="column-header">
-                {column !== 'LEFT_SIDE' && column !== 'RIGHT_SIDE' && column !== 'AISLE' ? column : ''}
+                {column !== 'LEFT_SIDE' && column !== 'RIGHT_SIDE' && column !== 'AISLE' ? column :   ''}
               </div>
             ))}
           </div>
