@@ -44,6 +44,8 @@ func main() {
 	bookCabinController := controller.NewBookCabinController(bookCabinService)
 
 	r.Get("/api/v1/seat-map", bookCabinController.GetSeatMap)
+	// TODO: select seat
+
 
 	logger.Info("Server is running on port 8080")
 	http.ListenAndServe(":8080", r)

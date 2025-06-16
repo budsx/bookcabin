@@ -2,6 +2,8 @@ package mysql
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/budsx/bookcabin/models"
 )
@@ -13,8 +15,8 @@ const (
 	selectCabinsByAircraftID = `
 		SELECT id, aircraft_id, deck, first_row, last_row, created_at, updated_at FROM cabins WHERE aircraft_id = ?
 	`
-	selectSeatColumnsByCabinID = `
-		SELECT id, cabin_id, column_code, created_at, updated_at FROM seat_columns WHERE cabin_id = ?
+	selectSeatColumnsByCabinIDs = `
+		SELECT id, cabin_id, column_code, created_at, updated_at FROM seat_columns WHERE cabin_id IN (%s)
 	`
 	selectSeatRowsByCabinID = "SELECT id, cabin_id, `row_number`, created_at, updated_at FROM seat_rows WHERE cabin_id = ?"
 
@@ -78,8 +80,16 @@ func (d *dbReadWriter) ReadCabinsByAircraftID(ctx context.Context, aircraftID in
 	return cabins, nil
 }
 
-func (d *dbReadWriter) ReadSeatColumnsByCabinID(ctx context.Context, cabinID int32) ([]models.SeatColumn, error) {
-	rows, err := d.db.QueryContext(ctx, selectSeatColumnsByCabinID, cabinID)
+func (d *dbReadWriter) ReadSeatColumnsByCabinIDs(ctx context.Context, cabinIDs []int32) ([]models.SeatColumn, error) {
+	inClause := buildInClause(len(cabinIDs))
+	query := fmt.Sprintf(selectSeatColumnsByCabinIDs, inClause)
+
+	args := make([]interface{}, len(cabinIDs))
+	for i, id := range cabinIDs {
+		args[i] = id
+	}
+
+	rows, err := d.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -226,4 +236,12 @@ func (d *dbReadWriter) ReadSeatCodesBySeatRowID(ctx context.Context, seatRowID i
 	}
 
 	return seatCodes, nil
+}
+
+func buildInClause(length int) string {
+	placeholders := make([]string, length)
+	for i := 0; i < length; i++ {
+		placeholders[i] = "?"
+	}
+	return strings.Join(placeholders, ",")
 }
