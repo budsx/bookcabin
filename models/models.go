@@ -166,7 +166,7 @@ type Booking struct {
 
 type BookingFlight struct {
 	ID                    int64
-	BookingID             int32
+	BookingID             int64
 	FlightNumber          int32
 	OperatingFlightNumber int32
 	AirlineCode           string

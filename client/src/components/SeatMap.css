@@ -1,0 +1,280 @@
+.seat-map {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+}
+
+.aircraft-info {
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.aircraft-info h3 {
+  margin: 0 0 5px 0;
+  color: #333;
+}
+
+.aircraft-info p {
+  margin: 0;
+  color: #666;
+}
+
+.seat-legend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+}
+
+.selected-seat-info {
+  text-align: center;
+  padding: 15px;
+  background: #e8f4fd;
+  border: 2px solid #2196F3;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.selected-seat-info h4 {
+  margin: 0 0 10px 0;
+  color: #1976D2;
+}
+
+.confirm-btn, .cancel-btn {
+  padding: 8px 16px;
+  margin: 0 5px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.confirm-btn {
+  background: #4CAF50;
+  color: white;
+}
+
+.confirm-btn:hover {
+  background: #45a049;
+}
+
+.cancel-btn {
+  background: #f44336;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: #da190b;
+}
+
+.cabin {
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  padding: 20px;
+  background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+}
+
+.cabin-header {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.cabin-header h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.column-headers {
+  display: grid;
+  grid-template-columns: 30px 40px 40px 40px 30px 40px 40px 40px 30px;
+  gap: 5px;
+  margin-bottom: 10px;
+  font-weight: bold;
+  font-size: 14px;
+  text-align: center;
+}
+
+.column-header {
+  padding: 5px;
+  color: #666;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 30px 1fr 30px;
+  gap: 10px;
+  align-items: center;
+}
+
+.row-number {
+  font-weight: bold;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.seats {
+  display: grid;
+  grid-template-columns: 40px 40px 40px 30px 40px 40px 40px;
+  gap: 5px;
+  justify-content: center;
+}
+
+.seat {
+  width: 35px;
+  height: 35px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  position: relative;
+}
+
+.seat.available {
+  background: #4CAF50;
+  color: white;
+  border-color: #45a049;
+}
+
+.seat.available:hover {
+  background: #66BB6A;
+  transform: scale(1.05);
+}
+
+.seat.occupied {
+  background: #f44336;
+  color: white;
+  cursor: not-allowed;
+  border-color: #d32f2f;
+}
+
+.seat.selected {
+  background: #2196F3;
+  color: white;
+  border-color: #1976D2;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); }
+}
+
+.seat.window {
+  position: relative;
+}
+
+.seat.window::after {
+  content: '⬜';
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  font-size: 8px;
+  color: #2196F3;
+}
+
+.seat.aisle-space {
+  background: transparent;
+  cursor: default;
+  color: #ccc;
+  font-size: 20px;
+  border: none;
+}
+
+.seat.aisle-space:hover {
+  transform: none;
+}
+
+.seat.blank {
+  background: transparent;
+  cursor: default;
+  border: none;
+}
+
+.seat.wing {
+  background: #795548;
+  color: white;
+  cursor: default;
+  border-color: #5d4037;
+}
+
+.seat.bulkhead {
+  background: #9E9E9E;
+  color: white;
+  cursor: default;
+  border-color: #757575;
+}
+
+.seat-label {
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.aisle-label {
+  color: #999;
+  font-size: 16px;
+}
+
+.error {
+  text-align: center;
+  padding: 20px;
+  color: #f44336;
+  font-size: 18px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .seat-map {
+    padding: 10px;
+  }
+  
+  .seat-legend {
+    gap: 10px;
+  }
+  
+  .legend-item {
+    font-size: 12px;
+  }
+  
+  .seats {
+    gap: 3px;
+  }
+  
+  .seat {
+    width: 30px;
+    height: 30px;
+    font-size: 9px;
+  }
+  
+  .column-headers {
+    grid-template-columns: 25px 35px 35px 35px 25px 35px 35px 35px 25px;
+    font-size: 12px;
+  }
+} 

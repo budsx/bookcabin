@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/budsx/bookcabin/config"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
 
 func main() {
@@ -38,15 +40,27 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{
+			"http://localhost:3000",
+		},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
 
 	logger := logger.GetLogger()
 	bookCabinService := services.NewBookCabinService(repo, logger)
 	bookCabinController := controller.NewBookCabinController(bookCabinService)
 
 	r.Get("/api/v1/seat-map", bookCabinController.GetSeatMap)
-	// TODO: select seat
+	// r.Post("/api/v1/seat-map/select", bookCabinController.SelectSeat)
+	// r.Post("/api/v1/seat-map/confirm", bookCabinController.ConfirmSeat)
 
+	// r.Get("/api/v1/seat-map/cancel", bookCabinController.CancelSeat)
 
-	logger.Info("Server is running on port 8080")
-	http.ListenAndServe(":8080", r)
+	serverAddr := fmt.Sprintf(":%s", cfg.ServicePort)
+	logger.Info(fmt.Sprintf("Server is running on port %s", cfg.ServicePort))
+	http.ListenAndServe(serverAddr, r)
 }

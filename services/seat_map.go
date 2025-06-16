@@ -11,8 +11,22 @@ func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.Se
 	s.logger.Info("GetSeatMap", zap.String("aircraftCode", seatMapRequest.AircraftCode))
 	seatMapResponse := dto.SeatMapResponse{}
 
+	// Read Flight
+	bookingFlight, err := s.repo.DBReadWriter.ReadBookingFlightByID(ctx, seatMapRequest.FlightID)
+	if err != nil {
+		s.logger.Error("Failed to read flight by id", zap.Error(err))
+		return seatMapResponse, err
+	}
+
+	// Read Booking
+	booking, err := s.repo.DBReadWriter.ReadBookingByID(ctx, bookingFlight.BookingID)
+	if err != nil {
+		s.logger.Error("Failed to read booking by id", zap.Error(err))
+		return seatMapResponse, err
+	}
+
 	// Read Aircraft
-	aircraft, err := s.repo.DBReadWriter.ReadAircraftsByCode(ctx, seatMapRequest.AircraftCode)
+	aircraft, err := s.repo.DBReadWriter.ReadAircraftsByCode(ctx, booking.Equipment)
 	if err != nil {
 		s.logger.Error("Failed to read aircrafts by code", zap.Error(err))
 		return seatMapResponse, err

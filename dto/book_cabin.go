@@ -6,6 +6,7 @@ type HealthCheckResponse struct {
 
 type SeatMapRequest struct {
 	AircraftCode string `json:"aircraftCode"`
+	FlightID     int64  `json:"flightId"`
 }
 
 type SeatMapResponse struct {

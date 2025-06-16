@@ -4,6 +4,7 @@ go 1.21.0
 
 require (
 	github.com/go-chi/chi/v5 v5.2.1
+	github.com/go-chi/cors v1.2.1
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/joho/godotenv v1.5.1
 	go.uber.org/zap v1.27.0

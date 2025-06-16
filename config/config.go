@@ -24,8 +24,13 @@ func LoadConfig() (*Config, error) {
 		return nil, err
 	}
 
+	servicePort := os.Getenv("SERVICE_PORT")
+	if servicePort == "" {
+		servicePort = "8080"
+	}
+
 	return &Config{
-		ServicePort: "8080",
+		ServicePort: servicePort,
 		DBHost:      os.Getenv("DB_HOST"),
 		DBPort:      os.Getenv("DB_PORT"),
 		DBUser:      os.Getenv("DB_USER"),
