@@ -4,6 +4,10 @@ type HealthCheckResponse struct {
 	Status string `json:"status"`
 }
 
+type SeatMapRequest struct {
+	AircraftCode string `json:"aircraftCode"`
+}
+
 type SeatMapResponse struct {
 	SeatsItineraryParts []SeatsItineraryPart `json:"seatsItineraryParts"`
 	SelectedSeats       []SelectedSeat       `json:"selectedSeats,omitempty"`
@@ -15,7 +19,7 @@ type SeatsItineraryPart struct {
 
 type SegmentSeatMap struct {
 	PassengerSeatMaps []PassengerSeatMap `json:"passengerSeatMaps"`
-	Segment           Segment            `json:"segment"`
+	Segment           Segment            `json:"segment,omitempty"`
 }
 
 type PassengerSeatMap struct {
@@ -45,27 +49,28 @@ type SeatRow struct {
 }
 
 type Seat struct {
-	StorefrontSlotCode     string    `json:"storefrontSlotCode"`
-	Available              bool      `json:"available"`
-	Code                   string    `json:"code,omitempty"`
-	Designations           []string  `json:"designations,omitempty"`
-	Entitled               bool      `json:"entitled"`
-	FeeWaived              bool      `json:"feeWaived"`
-	EntitledRuleID         string    `json:"entitledRuleId,omitempty"`
-	FeeWaivedRuleID        string    `json:"feeWaivedRuleId,omitempty"`
-	SeatCharacteristics    []string  `json:"seatCharacteristics,omitempty"`
-	Limitations            []string  `json:"limitations,omitempty"`
-	RefundIndicator        string    `json:"refundIndicator,omitempty"`
-	FreeOfCharge           bool      `json:"freeOfCharge"`
-	Prices                 PriceInfo `json:"prices,omitempty"`
-	Taxes                  PriceInfo `json:"taxes,omitempty"`
-	Total                  PriceInfo `json:"total,omitempty"`
-	OriginallySelected     bool      `json:"originallySelected"`
-	RawSeatCharacteristics []string  `json:"rawSeatCharacteristics,omitempty"`
+	SlotCharacteristics    []string   `json:"slotCharacteristics,omitempty"`
+	StorefrontSlotCode     string     `json:"storefrontSlotCode"`
+	Available              bool       `json:"available"`
+	Code                   string     `json:"code,omitempty"`
+	Designations           []string   `json:"designations,omitempty"`
+	Entitled               bool       `json:"entitled"`
+	FeeWaived              bool       `json:"feeWaived"`
+	EntitledRuleID         string     `json:"entitledRuleId,omitempty"`
+	FeeWaivedRuleID        string     `json:"feeWaivedRuleId,omitempty"`
+	SeatCharacteristics    []string   `json:"seatCharacteristics,omitempty"`
+	Limitations            []string   `json:"limitations,omitempty"`
+	RefundIndicator        string     `json:"refundIndicator,omitempty"`
+	FreeOfCharge           bool       `json:"freeOfCharge"`
+	Prices                 *PriceInfo `json:"prices,omitempty"`
+	Taxes                  *PriceInfo `json:"taxes,omitempty"`
+	Total                  *PriceInfo `json:"total,omitempty"`
+	OriginallySelected     bool       `json:"originallySelected"`
+	RawSeatCharacteristics []string   `json:"rawSeatCharacteristics,omitempty"`
 }
 
 type PriceInfo struct {
-	Alternatives [][]Price `json:"alternatives"`
+	Alternatives [][]Price `json:"alternatives,omitempty"`
 }
 
 type Price struct {

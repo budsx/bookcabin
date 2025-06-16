@@ -27,6 +27,20 @@ const (
 	selectRawSeatCharacteristicsBySeatID = `
 		SELECT id, seat_id, raw_characteristic, created_at, updated_at FROM raw_seat_characteristics WHERE seat_id = ?
 	`
+
+	selectSeatCodesBySeatRowID = `
+		SELECT DISTINCT storefront_slot_code FROM seats WHERE seat_row_id = ?
+	`
+)
+
+const (
+	seatCode         = "SEAT"
+	blankSlotCode    = "BLANK"
+	bulkheadSlotCode = "BULKHEAD"
+	windowSlotCode   = "WINDOW"
+	aisleSlotCode    = "AISLE"
+	centerSlotCode   = "CENTER"
+	exitSlotCode     = "EXIT"
 )
 
 func (d *dbReadWriter) ReadAircraftsByCode(ctx context.Context, code string) (models.Aircraft, error) {
@@ -188,4 +202,28 @@ func (d *dbReadWriter) ReadRawSeatCharacteristicsBySeatID(ctx context.Context, s
 	}
 
 	return rawSeatCharacteristics, nil
+}
+
+func (d *dbReadWriter) ReadSeatCodesBySeatRowID(ctx context.Context, seatRowID int32) ([]string, error) {
+	rows, err := d.db.QueryContext(ctx, selectSeatCodesBySeatRowID, seatRowID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var seatCodes []string
+	for rows.Next() {
+		var seatCode string
+		err := rows.Scan(&seatCode)
+		if err != nil {
+			return nil, err
+		}
+		seatCodes = append(seatCodes, seatCode)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return seatCodes, nil
 }
