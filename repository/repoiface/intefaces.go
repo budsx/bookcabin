@@ -17,8 +17,11 @@ type DBReadWriter interface {
 	ReadRawSeatCharacteristicsBySeatIDs(ctx context.Context, seatIDs []int64) ([]models.RawSeatCharacteristic, error)
 	ReadSeatCodesBySeatRowIDs(ctx context.Context, seatRowIDs []int64) ([]string, error)
 	ReadPassengerByID(ctx context.Context, id int64) (models.Passenger, error)
+	ReadPassengerEmail(ctx context.Context, passengerID int64) ([]string, error)
+	ReadPassengerPhone(ctx context.Context, passengerID int64) ([]string, error)
 	ReadBookingFlightByID(ctx context.Context, flightNumber int64) (models.BookingFlight, error)
-	ReadBookingByID(ctx context.Context, bookingID int64) (models.Booking, error) 
+	ReadBookingByID(ctx context.Context, bookingID int64) (models.Booking, error)
+	ReadSeatPricesBySeatIDs(ctx context.Context, seatIDs []int64) ([]models.SeatPrice, error)
 	Ping(ctx context.Context) error
 	io.Closer
 }

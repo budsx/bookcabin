@@ -171,4 +171,74 @@ type Flight struct {
 }
 
 type SelectedSeat struct {
+	FlightID      int64            `json:"flightId"`
+	SeatCode      string           `json:"seatCode"`
+	PassengerID   int64            `json:"passengerId"`
+	Status        string           `json:"status"` // "selected", "confirmed"
+	SelectionTime string           `json:"selectionTime"`
+	Price         *PriceInfo       `json:"price,omitempty"`
+	PassengerInfo PassengerDetails `json:"passengerInfo"`
 }
+
+// Seat Selection Request/Response DTOs
+type SeatSelectionRequest struct {
+	FlightID      int64            `json:"flightId"`
+	SeatCode      string           `json:"seatCode"`
+	PassengerInfo PassengerDetails `json:"passengerInfo"`
+}
+
+type SeatSelectionResponse struct {
+	Success      bool          `json:"success"`
+	Message      string        `json:"message"`
+	SelectedSeat *SelectedSeat `json:"selectedSeat,omitempty"`
+	Error        string        `json:"error,omitempty"`
+}
+
+type SeatConfirmationRequest struct {
+	FlightID      int64            `json:"flightId"`
+	SeatCode      string           `json:"seatCode"`
+	PassengerInfo PassengerDetails `json:"passengerInfo"`
+}
+
+type SeatConfirmationResponse struct {
+	Success       bool          `json:"success"`
+	Message       string        `json:"message"`
+	ConfirmedSeat *SelectedSeat `json:"confirmedSeat,omitempty"`
+	BookingRef    string        `json:"bookingRef,omitempty"`
+	Error         string        `json:"error,omitempty"`
+}
+
+// Custom Error Types
+type BookCabinError struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Details string `json:"details,omitempty"`
+}
+
+func (e BookCabinError) Error() string {
+	return e.Message
+}
+
+// NewBookCabinError creates a new custom error with details
+func NewBookCabinError(code, message, details string) BookCabinError {
+	return BookCabinError{
+		Code:    code,
+		Message: message,
+		Details: details,
+	}
+}
+
+// Predefined custom errors for consistent error handling
+// These errors are user-friendly and don't expose internal system details
+var (
+	ErrFlightNotFound      = BookCabinError{Code: "FLIGHT_NOT_FOUND", Message: "Flight not found"}
+	ErrBookingNotFound     = BookCabinError{Code: "BOOKING_NOT_FOUND", Message: "Booking not found"}
+	ErrAircraftNotFound    = BookCabinError{Code: "AIRCRAFT_NOT_FOUND", Message: "Aircraft configuration not found"}
+	ErrSeatMapUnavailable  = BookCabinError{Code: "SEAT_MAP_UNAVAILABLE", Message: "Seat map is currently unavailable"}
+	ErrPassengerNotFound   = BookCabinError{Code: "PASSENGER_NOT_FOUND", Message: "Passenger information not found"}
+	ErrSeatNotAvailable    = BookCabinError{Code: "SEAT_NOT_AVAILABLE", Message: "Selected seat is not available"}
+	ErrSeatAlreadySelected = BookCabinError{Code: "SEAT_ALREADY_SELECTED", Message: "This seat has already been selected by another passenger"}
+	ErrInvalidSeatCode     = BookCabinError{Code: "INVALID_SEAT_CODE", Message: "Invalid seat code provided"}
+	ErrDataAccessError     = BookCabinError{Code: "DATA_ACCESS_ERROR", Message: "Unable to access required data. Please try again later"}
+	ErrInternalServerError = BookCabinError{Code: "INTERNAL_ERROR", Message: "An internal error occurred. Please try again later"}
+)

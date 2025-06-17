@@ -55,10 +55,13 @@ func main() {
 	bookCabinController := controller.NewBookCabinController(bookCabinService)
 
 	r.Get("/api/v1/seat-map", bookCabinController.GetSeatMap)
-	// r.Post("/api/v1/seat-map/select", bookCabinController.SelectSeat)
-	// r.Post("/api/v1/seat-map/confirm", bookCabinController.ConfirmSeat)
+	// Hold Seat
+	r.Post("/api/v1/seat-map/select", bookCabinController.SelectSeat)
+	// Confirm Seat
+	r.Post("/api/v1/seat-map/confirm", bookCabinController.ConfirmSeat)
 
-	// r.Get("/api/v1/seat-map/cancel", bookCabinController.CancelSeat)
+	// Reset Seat for testing
+	// r.Get("/api/v1/seat-map/reset", bookCabinController.ResetSeat)
 
 	serverAddr := fmt.Sprintf(":%s", cfg.ServicePort)
 	logger.Info(fmt.Sprintf("Server is running on port %s", cfg.ServicePort))

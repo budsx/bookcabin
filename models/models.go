@@ -205,3 +205,14 @@ type BookingSeat struct {
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
 }
+
+type SeatPrice struct {
+	ID               int64
+	SeatID           int64
+	PriceType        string
+	Amount           float64
+	Currency         string
+	AlternativeGroup string
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}

@@ -2,41 +2,42 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/budsx/bookcabin/dto"
 	"go.uber.org/zap"
 )
 
 func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.SeatMapRequest) (dto.SeatMapResponse, error) {
-	s.logger.Info("GetSeatMap", zap.String("aircraftCode", seatMapRequest.AircraftCode))
 	seatMapResponse := dto.SeatMapResponse{}
 
 	// Read Flight
 	bookingFlight, err := s.repo.DBReadWriter.ReadBookingFlightByID(ctx, seatMapRequest.FlightID)
 	if err != nil {
-		s.logger.Error("Failed to read flight by id", zap.Error(err))
-		return seatMapResponse, err
+		s.logger.Error("Failed to read flight by id", zap.Error(err), zap.Int64("flightId", seatMapRequest.FlightID))
+		return seatMapResponse, dto.ErrFlightNotFound
 	}
 
 	// Read Booking
 	booking, err := s.repo.DBReadWriter.ReadBookingByID(ctx, bookingFlight.BookingID)
 	if err != nil {
-		s.logger.Error("Failed to read booking by id", zap.Error(err))
-		return seatMapResponse, err
+		s.logger.Error("Failed to read booking by id", zap.Error(err), zap.Int64("bookingId", bookingFlight.BookingID))
+		return seatMapResponse, dto.ErrBookingNotFound
 	}
 
 	// Read Aircraft
 	aircraft, err := s.repo.DBReadWriter.ReadAircraftsByCode(ctx, booking.Equipment)
 	if err != nil {
-		s.logger.Error("Failed to read aircrafts by code", zap.Error(err))
-		return seatMapResponse, err
+		s.logger.Error("Failed to read aircrafts by code", zap.Error(err), zap.String("equipment", booking.Equipment))
+		return seatMapResponse, dto.ErrAircraftNotFound
 	}
 
 	// Read Cabins
 	cabins, err := s.repo.DBReadWriter.ReadCabinsByAircraftID(ctx, aircraft.ID)
 	if err != nil {
-		s.logger.Error("Failed to read cabins by aircraft id", zap.Error(err))
-		return seatMapResponse, err
+		s.logger.Error("Failed to read cabins by aircraft id", zap.Error(err), zap.Int64("aircraftId", aircraft.ID))
+		return seatMapResponse, dto.ErrSeatMapUnavailable
 	}
 	cabinsIDs := make([]int64, 0)
 	for _, cabin := range cabins {
@@ -46,8 +47,8 @@ func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.Se
 	// Read Seat Columns
 	seatColumns, err := s.repo.DBReadWriter.ReadSeatColumnsByCabinIDs(ctx, cabinsIDs)
 	if err != nil {
-		s.logger.Error("Failed to read seat columns by cabin ids", zap.Error(err))
-		return seatMapResponse, err
+		s.logger.Error("Failed to read seat columns by cabin ids", zap.Error(err), zap.Any("cabinIds", cabinsIDs))
+		return seatMapResponse, dto.ErrSeatMapUnavailable
 	}
 	seatColumnsDTO := make([]string, 0)
 	for _, seatColumn := range seatColumns {
@@ -57,8 +58,8 @@ func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.Se
 	// Read Seat Rows
 	seatRows, err := s.repo.DBReadWriter.ReadSeatRowsByCabinIDs(ctx, cabinsIDs)
 	if err != nil {
-		s.logger.Error("Failed to read seat rows by cabin ids", zap.Error(err))
-		return seatMapResponse, err
+		s.logger.Error("Failed to read seat rows by cabin ids", zap.Error(err), zap.Any("cabinIds", cabinsIDs))
+		return seatMapResponse, dto.ErrSeatMapUnavailable
 	}
 	seatRowsIDs := make([]int64, 0)
 	for _, seatRow := range seatRows {
@@ -68,8 +69,8 @@ func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.Se
 	// Read Seats
 	seats, err := s.repo.DBReadWriter.ReadSeatsBySeatRowIDs(ctx, seatRowsIDs)
 	if err != nil {
-		s.logger.Error("Failed to read seats by seat row ids", zap.Error(err))
-		return seatMapResponse, err
+		s.logger.Error("Failed to read seats by seat row ids", zap.Error(err), zap.Any("seatRowIds", seatRowsIDs))
+		return seatMapResponse, dto.ErrSeatMapUnavailable
 	}
 	seatsIDs := make([]int64, 0)
 	for _, seat := range seats {
@@ -79,15 +80,22 @@ func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.Se
 	// Read Seat Characteristics
 	seatCharacteristics, err := s.repo.DBReadWriter.ReadSeatCharacteristicsBySeatIDs(ctx, seatsIDs)
 	if err != nil {
-		s.logger.Error("Failed to read seat characteristics by seat ids", zap.Error(err))
-		return seatMapResponse, err
+		s.logger.Error("Failed to read seat characteristics by seat ids", zap.Error(err), zap.Any("seatIds", seatsIDs))
+		return seatMapResponse, dto.ErrSeatMapUnavailable
 	}
 
 	// Read Raw Seat Characteristics
 	rawSeatCharacteristics, err := s.repo.DBReadWriter.ReadRawSeatCharacteristicsBySeatIDs(ctx, seatsIDs)
 	if err != nil {
-		s.logger.Error("Failed to read raw seat characteristics by seat ids", zap.Error(err))
-		return seatMapResponse, err
+		s.logger.Error("Failed to read raw seat characteristics by seat ids", zap.Error(err), zap.Any("seatIds", seatsIDs))
+		return seatMapResponse, dto.ErrSeatMapUnavailable
+	}
+
+	// Read Seat Prices
+	seatPrices, err := s.repo.DBReadWriter.ReadSeatPricesBySeatIDs(ctx, seatsIDs)
+	if err != nil {
+		s.logger.Error("Failed to read seat prices by seat ids", zap.Error(err), zap.Any("seatIds", seatsIDs))
+		return seatMapResponse, dto.ErrSeatMapUnavailable
 	}
 
 	seatRowsDTO := make([]dto.SeatRow, 0)
@@ -121,6 +129,39 @@ func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.Se
 					}
 				}
 
+				// Get seat prices for this sea
+				seatPricesDTO := make([][]dto.Price, 0)
+				seatTaxesDTO := make([][]dto.Price, 0)
+				seatTotalDTO := make([][]dto.Price, 0)
+				for _, price := range seatPrices {
+					if price.SeatID == seat.ID {
+						if price.PriceType == "price" {
+							seatPricesDTO = append(seatPricesDTO, []dto.Price{
+								{
+									Amount:   float64(price.Amount),
+									Currency: string(price.Currency),
+								},
+							})
+						}
+						if price.PriceType == "tax" {
+							seatTaxesDTO = append(seatTaxesDTO, []dto.Price{
+								{
+									Amount:   float64(price.Amount),
+									Currency: string(price.Currency),
+								},
+							})
+						}
+						if price.PriceType == "total" {
+							seatTotalDTO = append(seatTotalDTO, []dto.Price{
+								{
+									Amount:   float64(price.Amount),
+									Currency: string(price.Currency),
+								},
+							})
+						}
+					}
+				}
+
 				rowSeats = append(rowSeats, dto.Seat{
 					StorefrontSlotCode:     seat.StorefrontSlotCode,
 					Available:              seat.Available,
@@ -132,6 +173,15 @@ func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.Se
 					FreeOfCharge:           seat.FreeOfCharge,
 					OriginallySelected:     seat.OriginallySelected,
 					RawSeatCharacteristics: rawSeatChars,
+					Prices: &dto.PriceInfo{
+						Alternatives: seatPricesDTO,
+					},
+					Taxes: &dto.PriceInfo{
+						Alternatives: seatTaxesDTO,
+					},
+					Total: &dto.PriceInfo{
+						Alternatives: seatTotalDTO,
+					},
 				})
 			}
 		}
@@ -159,8 +209,20 @@ func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.Se
 	// TODO: Get passenger id from request / context / token
 	passenger, err := s.repo.DBReadWriter.ReadPassengerByID(ctx, 1)
 	if err != nil {
-		s.logger.Error("Failed to read passenger by id", zap.Error(err))
-		return seatMapResponse, err
+		s.logger.Error("Failed to read passenger by id", zap.Error(err), zap.Int64("passengerId", 1))
+		return seatMapResponse, dto.ErrPassengerNotFound
+	}
+
+	emails, err := s.repo.DBReadWriter.ReadPassengerEmail(ctx, passenger.ID)
+	if err != nil {
+		s.logger.Error("Failed to read passenger email", zap.Error(err), zap.Int64("passengerId", passenger.ID))
+		return seatMapResponse, dto.ErrPassengerNotFound
+	}
+
+	phones, err := s.repo.DBReadWriter.ReadPassengerPhone(ctx, passenger.ID)
+	if err != nil {
+		s.logger.Error("Failed to read passenger phone", zap.Error(err), zap.Int64("passengerId", passenger.ID))
+		return seatMapResponse, dto.ErrPassengerNotFound
 	}
 
 	passengerDTO := dto.Passenger{
@@ -183,12 +245,8 @@ func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.Se
 				Country:     passenger.Country,
 				AddressType: passenger.AddressType,
 			},
-			// Emails: []string{
-			// 	passenger.Email,
-			// },
-			// Phones: []string{
-			// 	passenger.Phone,
-			// },
+			Emails: emails,
+			Phones: phones,
 		},
 	}
 	seatMapResponse = dto.SeatMapResponse{
@@ -215,4 +273,107 @@ func (s *BookCabinService) GetSeatMap(ctx context.Context, seatMapRequest dto.Se
 	}
 
 	return seatMapResponse, nil
+}
+
+func (s *BookCabinService) SelectSeat(ctx context.Context, req dto.SeatSelectionRequest) (dto.SeatSelectionResponse, error) {
+	s.logger.Info("SelectSeat",
+		zap.Int64("flightId", req.FlightID),
+		zap.String("seatCode", req.SeatCode),
+		zap.String("passengerName", fmt.Sprintf("%s %s", req.PassengerInfo.FirstName, req.PassengerInfo.LastName)))
+
+	response := dto.SeatSelectionResponse{}
+
+	// Validate seat code format
+	if req.SeatCode == "" {
+		s.logger.Warn("Invalid seat code provided", zap.String("seatCode", req.SeatCode))
+		return response, dto.ErrInvalidSeatCode
+	}
+
+	// TODO: Validate seat availability by checking database
+	// For now, we'll simulate some basic validations
+
+	// Check if flight exists (basic validation)
+	_, err := s.repo.DBReadWriter.ReadBookingFlightByID(ctx, req.FlightID)
+	if err != nil {
+		s.logger.Error("Failed to read flight for seat selection", zap.Error(err), zap.Int64("flightId", req.FlightID))
+		return response, dto.ErrFlightNotFound
+	}
+
+	// TODO: Check if seat is already selected by another passenger
+	// TODO: Validate passenger information against booking
+	// TODO: Check seat pricing and restrictions
+	// TODO: Implement seat hold/reservation logic with timeout
+
+	// For now, simulate seat selection
+	selectedSeat := &dto.SelectedSeat{
+		FlightID:      req.FlightID,
+		SeatCode:      req.SeatCode,
+		PassengerID:   1, // TODO: Get from context/token
+		Status:        "selected",
+		SelectionTime: time.Now().Format(time.RFC3339),
+		PassengerInfo: req.PassengerInfo,
+		// TODO: Add price information from seat data
+	}
+
+	response.Success = true
+	response.Message = fmt.Sprintf("Seat %s has been temporarily selected for 15 minutes", req.SeatCode)
+	response.SelectedSeat = selectedSeat
+
+	s.logger.Info("Seat selected successfully",
+		zap.String("seatCode", req.SeatCode),
+		zap.Int64("flightId", req.FlightID))
+
+	return response, nil
+}
+
+func (s *BookCabinService) ConfirmSeat(ctx context.Context, req dto.SeatConfirmationRequest) (dto.SeatConfirmationResponse, error) {
+	s.logger.Info("ConfirmSeat",
+		zap.Int64("flightId", req.FlightID),
+		zap.String("seatCode", req.SeatCode),
+		zap.String("passengerName", fmt.Sprintf("%s %s", req.PassengerInfo.FirstName, req.PassengerInfo.LastName)))
+
+	response := dto.SeatConfirmationResponse{}
+
+	// Validate seat code format
+	if req.SeatCode == "" {
+		s.logger.Warn("Invalid seat code provided", zap.String("seatCode", req.SeatCode))
+		return response, dto.ErrInvalidSeatCode
+	}
+
+	// Check if flight exists (basic validation)
+	_, err := s.repo.DBReadWriter.ReadBookingFlightByID(ctx, req.FlightID)
+	if err != nil {
+		s.logger.Error("Failed to read flight for seat confirmation", zap.Error(err), zap.Int64("flightId", req.FlightID))
+		return response, dto.ErrFlightNotFound
+	}
+
+	// TODO: Validate that seat was previously selected by this passenger
+	// TODO: Process payment if seat has fees
+	// TODO: Update seat status in database to unavailable
+	// TODO: Update booking record with confirmed seat
+	// TODO: Send confirmation email/SMS
+	// TODO: Clear any temporary seat holds
+
+	// For now, simulate seat confirmation
+	confirmedSeat := &dto.SelectedSeat{
+		FlightID:      req.FlightID,
+		SeatCode:      req.SeatCode,
+		PassengerID:   1, // TODO: Get from context/token
+		Status:        "confirmed",
+		SelectionTime: time.Now().Format(time.RFC3339),
+		PassengerInfo: req.PassengerInfo,
+		// TODO: Add price information from seat data
+	}
+
+	response.Success = true
+	response.Message = fmt.Sprintf("Seat %s has been confirmed for your booking", req.SeatCode)
+	response.ConfirmedSeat = confirmedSeat
+	response.BookingRef = fmt.Sprintf("BC%d%s", req.FlightID, req.SeatCode) // Generate booking reference
+
+	s.logger.Info("Seat confirmed successfully",
+		zap.String("seatCode", req.SeatCode),
+		zap.Int64("flightId", req.FlightID),
+		zap.String("bookingRef", response.BookingRef))
+
+	return response, nil
 }
