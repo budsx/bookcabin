@@ -43,10 +43,20 @@
 }
 
 .legend-item .seat {
-  width: 20px;
-  height: 20px;
+  width: 25px;
+  height: 25px;
   border-radius: 4px;
   border: 2px solid transparent;
+}
+
+.legend-item .seat .seat-back {
+  width: 15px;
+  height: 9px;
+}
+
+.legend-item .seat .seat-cushion {
+  width: 16px;
+  height: 6px;
 }
 
 .legend-item .seat.available {
@@ -78,8 +88,6 @@
   font-size: 6px;
   color: #2196F3;
 }
-
-
 
 .selected-seat-info {
   text-align: center;
@@ -195,31 +203,31 @@
   transition: all 0.2s ease;
   border: 2px solid transparent;
   position: relative;
+  background: transparent;
 }
 
 .seat.available {
-  background: #4CAF50;
-  color: white;
-  border-color: #45a049;
+  color: #4CAF50;
+  border-color: #4CAF50;
 }
 
 .seat.available:hover {
-  background: #66BB6A;
-  transform: scale(1.05);
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
 }
 
 .seat.occupied {
-  background: #f44336;
-  color: white;
+  color: #f44336;
+  border-color: #f44336;
   cursor: not-allowed;
-  border-color: #d32f2f;
+  opacity: 0.7;
 }
 
 .seat.selected {
-  background: #2196F3;
-  color: white;
-  border-color: #1976D2;
+  color: #2196F3;
+  border-color: #2196F3;
   animation: pulse 1.5s infinite;
+  background: rgba(33, 150, 243, 0.1);
 }
 
 @keyframes pulse {
@@ -229,16 +237,24 @@
 }
 
 .seat.window {
-  position: relative;
+  color: #4CAF50;
+  border-color: #4CAF50;
 }
 
 .seat.window::after {
-  content: '⬜';
+  content: '◊';
   position: absolute;
   top: -5px;
-  right: -5px;
+  right: -3px;
   font-size: 8px;
   color: #2196F3;
+  background: white;
+  border-radius: 50%;
+  width: 10px;
+  height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .seat.aisle-space {
@@ -273,9 +289,52 @@
   border-color: #757575;
 }
 
+.seat-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+.seat-back {
+  width: 20px;
+  height: 12px;
+  background: currentColor;
+  border-radius: 3px 3px 0 0;
+  border: 1px solid rgba(0,0,0,0.2);
+  margin-bottom: 1px;
+}
+
+.seat-cushion {
+  width: 22px;
+  height: 8px;
+  background: currentColor;
+  border-radius: 2px;
+  border: 1px solid rgba(0,0,0,0.2);
+  position: relative;
+}
+
+.seat-cushion::before {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 2px;
+  right: 2px;
+  height: 2px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 0 0 2px 2px;
+}
+
 .seat-label {
-  font-size: 10px;
+  position: absolute;
+  bottom: -2px;
+  font-size: 7px;
   font-weight: bold;
+  color: #333;
+  text-shadow: 0 0 2px rgba(255,255,255,0.8);
 }
 
 .aisle-label {
@@ -317,5 +376,258 @@
   .column-headers {
     grid-template-columns: 40px 35px 35px 35px 25px 35px 35px 35px 40px;
     font-size: 12px;
+  }
+}
+
+/* Seat Info Modal */
+.seat-info-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.modal-body {
+  padding: 20px 24px;
+}
+
+.seat-detail-section {
+  margin-bottom: 20px;
+}
+
+.seat-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.seat-detail-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: #333;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #e9ecef;
+}
+
+.detail-item .label {
+  font-weight: 500;
+  color: #666;
+  font-size: 14px;
+}
+
+.detail-item .value {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.detail-item .value.price {
+  color: #2196F3;
+  font-family: 'Courier New', monospace;
+}
+
+.detail-item .value.price.total {
+  color: #4CAF50;
+  font-size: 16px;
+}
+
+.detail-item .value.status.available {
+  color: #4CAF50;
+}
+
+.detail-item .value.status.occupied {
+  color: #f44336;
+}
+
+.characteristics, .designations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.characteristic-tag, .designation-tag {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #bbdefb;
+}
+
+.designation-tag {
+  background: #f3e5f5;
+  color: #7b1fa2;
+  border-color: #ce93d8;
+}
+
+.limitations {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.limitation-item {
+  padding: 8px 12px;
+  background: #fff3e0;
+  border-radius: 6px;
+  border-left: 3px solid #ff9800;
+}
+
+.limitation-text {
+  font-size: 13px;
+  color: #e65100;
+  font-weight: 500;
+}
+
+.modal-footer {
+  padding: 16px 24px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.select-seat-btn, .close-modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.select-seat-btn {
+  background: #4CAF50;
+  color: white;
+}
+
+.select-seat-btn:hover {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.close-modal-btn {
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+.close-modal-btn:hover {
+  background: #eeeeee;
+  color: #333;
+}
+
+/* Mobile responsiveness for modal */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-height: 90vh;
+    margin: 20px;
+  }
+  
+  .modal-header, .modal-body, .modal-footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .modal-footer {
+    flex-direction: column;
+  }
+  
+  .select-seat-btn, .close-modal-btn {
+    width: 100%;
   }
 } 

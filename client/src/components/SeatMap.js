@@ -3,6 +3,8 @@ import './SeatMap.css';
 
 const SeatMap = ({ data }) => {
   const [selectedSeat, setSelectedSeat] = useState(null);
+  const [showSeatInfo, setShowSeatInfo] = useState(false);
+  const [seatInfo, setSeatInfo] = useState(null);
 
   const seatMapData = data?.seatsItineraryParts?.[0]?.segmentSeatMaps?.[0]?.passengerSeatMaps?.[0]?.seatMap;
   const cabin = seatMapData?.cabins?.[0];
@@ -12,9 +14,25 @@ const SeatMap = ({ data }) => {
   }
 
   const handleSeatClick = (seat) => {
-    if (seat.storefrontSlotCode === 'SEAT' && seat.available) {
-      setSelectedSeat(seat.code === selectedSeat ? null : seat.code);
+    if (seat.storefrontSlotCode === 'SEAT') {
+      setSeatInfo(seat);
+      setShowSeatInfo(true);
+      
+      if (seat.available) {
+        setSelectedSeat(seat.code === selectedSeat ? null : seat.code);
+      }
     }
+  };
+
+  const formatPrice = (priceInfo) => {
+    if (!priceInfo?.alternatives?.[0]?.[0]) return 'Free';
+    const price = priceInfo.alternatives[0][0];
+    return `${price.currency} ${price.amount.toFixed(2)}`;
+  };
+
+  const closeSeatInfo = () => {
+    setShowSeatInfo(false);
+    setSeatInfo(null);
   };
 
   const getSeatClass = (seat) => {
@@ -60,7 +78,7 @@ const SeatMap = ({ data }) => {
   };
 
   const renderSeat = (seat, seatIndex) => {
-    const isClickable = seat.storefrontSlotCode === 'SEAT' && seat.available;
+    const isClickable = seat.storefrontSlotCode === 'SEAT';
     
     return (
       <div
@@ -70,7 +88,11 @@ const SeatMap = ({ data }) => {
         title={seat.code || seat.storefrontSlotCode}
       >
         {seat.storefrontSlotCode === 'SEAT' ? (
-          <span className="seat-label">{seat.code}</span>
+          <div className="seat-container">
+            <div className="seat-back"></div>
+            <div className="seat-cushion"></div>
+            <span className="seat-label">{seat.code}</span>
+          </div>
         ) : seat.storefrontSlotCode === 'AISLE' ? (
           <span className="aisle-label"></span>
         ) : null}
@@ -87,25 +109,41 @@ const SeatMap = ({ data }) => {
 
       <div className="seat-legend">
         <div className="legend-item">
-          <div className="seat available"></div>
+          <div className="seat available">
+            <div className="seat-container">
+              <div className="seat-back"></div>
+              <div className="seat-cushion"></div>
+            </div>
+          </div>
           <span>Available</span>
         </div>
         <div className="legend-item">
-          <div className="seat occupied"></div>
+          <div className="seat occupied">
+            <div className="seat-container">
+              <div className="seat-back"></div>
+              <div className="seat-cushion"></div>
+            </div>
+          </div>
           <span>Occupied</span>
         </div>
         <div className="legend-item">
-          <div className="seat selected"></div>
+          <div className="seat selected">
+            <div className="seat-container">
+              <div className="seat-back"></div>
+              <div className="seat-cushion"></div>
+            </div>
+          </div>
           <span>Selected</span>
         </div>
         <div className="legend-item">
-          <div className="seat window"></div>
+          <div className="seat window">
+            <div className="seat-container">
+              <div className="seat-back"></div>
+              <div className="seat-cushion"></div>
+            </div>
+          </div>
           <span>Window</span>
         </div>
-        {/* <div className="legend-item">
-          <div className="seat aisle"></div>
-          <span>Aisle</span>
-        </div> */}
       </div>
 
       {selectedSeat && (
@@ -123,6 +161,128 @@ const SeatMap = ({ data }) => {
           >
             Clear Selection
           </button>
+        </div>
+      )}
+
+      {/* Seat Info Modal */}
+      {showSeatInfo && seatInfo && (
+        <div className="seat-info-modal">
+          <div className="modal-overlay" onClick={closeSeatInfo}></div>
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Seat Information</h3>
+              <button className="close-btn" onClick={closeSeatInfo}>×</button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="seat-detail-section">
+                <h4>📍 Seat Details</h4>
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <span className="label">Seat Code:</span>
+                    <span className="value">{seatInfo.code || 'N/A'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="label">Status:</span>
+                    <span className={`value status ${seatInfo.available ? 'available' : 'occupied'}`}>
+                      {seatInfo.available ? '✅ Available' : '❌ Occupied'}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="label">Free of Charge:</span>
+                    <span className="value">{seatInfo.freeOfCharge ? '✅ Yes' : '❌ No'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="label">Entitled:</span>
+                    <span className="value">{seatInfo.entitled ? '✅ Yes' : '❌ No'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {seatInfo.prices && (
+                <div className="seat-detail-section">
+                  <h4>💰 Pricing</h4>
+                  <div className="detail-grid">
+                    <div className="detail-item">
+                      <span className="label">Base Price:</span>
+                      <span className="value price">{formatPrice(seatInfo.prices)}</span>
+                    </div>
+                    {seatInfo.taxes && (
+                      <div className="detail-item">
+                        <span className="label">Taxes:</span>
+                        <span className="value price">{formatPrice(seatInfo.taxes)}</span>
+                      </div>
+                    )}
+                    {seatInfo.total && (
+                      <div className="detail-item">
+                        <span className="label">Total Price:</span>
+                        <span className="value price total">{formatPrice(seatInfo.total)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {seatInfo.seatCharacteristics && seatInfo.seatCharacteristics.length > 0 && (
+                <div className="seat-detail-section">
+                  <h4>🎯 Seat Features</h4>
+                  <div className="characteristics">
+                    {seatInfo.seatCharacteristics.map((char, index) => (
+                      <span key={index} className="characteristic-tag">
+                        {char === 'W' && '🪟 Window'}
+                        {char === 'A' && '🚶 Aisle'}
+                        {char === 'EXIT' && '🚪 Exit Row'}
+                        {char === 'EXTRA_LEGROOM' && '📏 Extra Legroom'}
+                        {char === 'PREMIUM' && '⭐ Premium'}
+                        {char !== 'W' && char !== 'A' && char !== 'EXIT' && char !== 'EXTRA_LEGROOM' && char !== 'PREMIUM' && char}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {seatInfo.designations && seatInfo.designations.length > 0 && (
+                <div className="seat-detail-section">
+                  <h4>🏷️ Designations</h4>
+                  <div className="designations">
+                    {seatInfo.designations.map((designation, index) => (
+                      <span key={index} className="designation-tag">{designation}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {seatInfo.limitations && seatInfo.limitations.length > 0 && (
+                <div className="seat-detail-section">
+                  <h4>⚠️ Limitations</h4>
+                  <div className="limitations">
+                    {seatInfo.limitations.map((limitation, index) => (
+                      <div key={index} className="limitation-item">
+                        <span className="limitation-text">{limitation}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              {seatInfo.available && (
+                <button 
+                  className="select-seat-btn"
+                  onClick={() => {
+                    setSelectedSeat(seatInfo.code);
+                    closeSeatInfo();
+                  }}
+                >
+                  Select This Seat
+                </button>
+              )}
+              <button className="close-modal-btn" onClick={closeSeatInfo}>
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
