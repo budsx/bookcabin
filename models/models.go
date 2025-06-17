@@ -190,6 +190,10 @@ type BookingSeat struct {
 	BookingID          int32
 	PassengerID        int32
 	SeatID             int32
+	FlightID           int32
+	Status             string
+	SelectionTime      time.Time
+	ExpiryTime         time.Time
 	Available          bool
 	Entitled           bool
 	FeeWaived          bool

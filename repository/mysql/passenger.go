@@ -61,16 +61,12 @@ func (d *dbReadWriter) ReadPassengerEmail(ctx context.Context, passengerID int64
 		var email string
 		err := rows.Scan(&email)
 		if err != nil {
+			if err == sql.ErrNoRows {
+				return nil, nil
+			}
 			return nil, err
 		}
 		emails = append(emails, email)
-	}
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
 	}
 
 	return emails, nil
@@ -89,16 +85,12 @@ func (d *dbReadWriter) ReadPassengerPhone(ctx context.Context, passengerID int64
 		var phone string
 		err := rows.Scan(&phone)
 		if err != nil {
+			if err == sql.ErrNoRows {
+				return nil, nil
+			}
 			return nil, err
 		}
 		phones = append(phones, phone)
-	}
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
 	}
 
 	return phones, nil

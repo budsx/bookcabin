@@ -79,48 +79,6 @@ func (c *BookCabinController) SelectSeat(w http.ResponseWriter, r *http.Request)
 	JSONResponse(w, http.StatusOK, selectSeatResponse)
 }
 
-func (c *BookCabinController) ConfirmSeat(w http.ResponseWriter, r *http.Request) {
-	var confirmSeatRequest dto.SeatConfirmationRequest
-
-	if err := json.NewDecoder(r.Body).Decode(&confirmSeatRequest); err != nil {
-		ErrorResponse(w, http.StatusBadRequest, dto.BookCabinError{
-			Code:    "INVALID_REQUEST_BODY",
-			Message: "Invalid request body format",
-		})
-		return
-	}
-
-	if confirmSeatRequest.FlightID == 0 {
-		ErrorResponse(w, http.StatusBadRequest, dto.BookCabinError{
-			Code:    "MISSING_FLIGHT_ID",
-			Message: "Flight ID is required",
-		})
-		return
-	}
-	if confirmSeatRequest.SeatCode == "" {
-		ErrorResponse(w, http.StatusBadRequest, dto.BookCabinError{
-			Code:    "MISSING_SEAT_CODE",
-			Message: "Seat code is required",
-		})
-		return
-	}
-	if confirmSeatRequest.PassengerInfo.FirstName == "" || confirmSeatRequest.PassengerInfo.LastName == "" {
-		ErrorResponse(w, http.StatusBadRequest, dto.BookCabinError{
-			Code:    "MISSING_PASSENGER_INFO",
-			Message: "Passenger first name and last name are required",
-		})
-		return
-	}
-
-	confirmSeatResponse, err := c.service.ConfirmSeat(r.Context(), confirmSeatRequest)
-	if err != nil {
-		HandleServiceError(w, err)
-		return
-	}
-
-	JSONResponse(w, http.StatusOK, confirmSeatResponse)
-}
-
 func JSONResponse(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)

@@ -46,31 +46,6 @@ export const seatMapService = {
       throw error;
     }
   },
-
-  async confirmSeatSelection(flightId, seatCode, passengerInfo) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/seat-map/confirm`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          flightId,
-          seatCode,
-          passengerInfo,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error confirming seat selection:', error);
-      throw error;
-    }
-  },
 };
 
 export default seatMapService; 

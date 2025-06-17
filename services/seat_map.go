@@ -283,97 +283,61 @@ func (s *BookCabinService) SelectSeat(ctx context.Context, req dto.SeatSelection
 
 	response := dto.SeatSelectionResponse{}
 
-	// Validate seat code format
 	if req.SeatCode == "" {
 		s.logger.Warn("Invalid seat code provided", zap.String("seatCode", req.SeatCode))
 		return response, dto.ErrInvalidSeatCode
 	}
 
-	// TODO: Validate seat availability by checking database
-	// For now, we'll simulate some basic validations
-
-	// Check if flight exists (basic validation)
-	_, err := s.repo.DBReadWriter.ReadBookingFlightByID(ctx, req.FlightID)
+	// Read Seat
+	tx, err := s.repo.DBReadWriter.BeginTx(ctx, nil)
 	if err != nil {
-		s.logger.Error("Failed to read flight for seat selection", zap.Error(err), zap.Int64("flightId", req.FlightID))
-		return response, dto.ErrFlightNotFound
+		s.logger.Error("Failed to begin transaction", zap.Error(err))
+		return response, dto.ErrSeatNotAvailable
+	}
+	defer tx.Rollback()
+
+	seat, err := s.repo.DBReadWriter.ReadSeatsByCode(ctx, tx, req.SeatCode)
+	if err != nil {
+		s.logger.Error("Failed to read seat by code", zap.Error(err), zap.String("seatCode", req.SeatCode))
+		return response, dto.ErrSeatNotAvailable
 	}
 
-	// TODO: Check if seat is already selected by another passenger
-	// TODO: Validate passenger information against booking
-	// TODO: Check seat pricing and restrictions
-	// TODO: Implement seat hold/reservation logic with timeout
+	if !seat.Available {
+		s.logger.Warn("Seat is not available", zap.String("seatCode", req.SeatCode))
+		return response, dto.ErrSeatNotAvailable
+	}
 
-	// For now, simulate seat selection
+	// Update Seat
+	seat.Available = false
+	err = s.repo.DBReadWriter.UpdateSeat(ctx, tx, seat)
+	if err != nil {
+		s.logger.Error("Failed to update seat", zap.Error(err), zap.Int64("seatId", seat.ID))
+		return response, dto.ErrSeatNotAvailable
+	}
+
+	// Commit Transaction
+	err = tx.Commit()
+	if err != nil {
+		s.logger.Error("Failed to commit transaction", zap.Error(err))
+		return response, dto.ErrSeatNotAvailable
+	}
+
 	selectedSeat := &dto.SelectedSeat{
 		FlightID:      req.FlightID,
 		SeatCode:      req.SeatCode,
-		PassengerID:   1, // TODO: Get from context/token
+		PassengerID:   1, // TODO: Get from auth context
 		Status:        "selected",
 		SelectionTime: time.Now().Format(time.RFC3339),
 		PassengerInfo: req.PassengerInfo,
-		// TODO: Add price information from seat data
 	}
 
 	response.Success = true
-	response.Message = fmt.Sprintf("Seat %s has been temporarily selected for 15 minutes", req.SeatCode)
+	response.Message = fmt.Sprintf("Seat %s has been selected successfully", req.SeatCode)
 	response.SelectedSeat = selectedSeat
 
 	s.logger.Info("Seat selected successfully",
 		zap.String("seatCode", req.SeatCode),
 		zap.Int64("flightId", req.FlightID))
-
-	return response, nil
-}
-
-func (s *BookCabinService) ConfirmSeat(ctx context.Context, req dto.SeatConfirmationRequest) (dto.SeatConfirmationResponse, error) {
-	s.logger.Info("ConfirmSeat",
-		zap.Int64("flightId", req.FlightID),
-		zap.String("seatCode", req.SeatCode),
-		zap.String("passengerName", fmt.Sprintf("%s %s", req.PassengerInfo.FirstName, req.PassengerInfo.LastName)))
-
-	response := dto.SeatConfirmationResponse{}
-
-	// Validate seat code format
-	if req.SeatCode == "" {
-		s.logger.Warn("Invalid seat code provided", zap.String("seatCode", req.SeatCode))
-		return response, dto.ErrInvalidSeatCode
-	}
-
-	// Check if flight exists (basic validation)
-	_, err := s.repo.DBReadWriter.ReadBookingFlightByID(ctx, req.FlightID)
-	if err != nil {
-		s.logger.Error("Failed to read flight for seat confirmation", zap.Error(err), zap.Int64("flightId", req.FlightID))
-		return response, dto.ErrFlightNotFound
-	}
-
-	// TODO: Validate that seat was previously selected by this passenger
-	// TODO: Process payment if seat has fees
-	// TODO: Update seat status in database to unavailable
-	// TODO: Update booking record with confirmed seat
-	// TODO: Send confirmation email/SMS
-	// TODO: Clear any temporary seat holds
-
-	// For now, simulate seat confirmation
-	confirmedSeat := &dto.SelectedSeat{
-		FlightID:      req.FlightID,
-		SeatCode:      req.SeatCode,
-		PassengerID:   1, // TODO: Get from context/token
-		Status:        "confirmed",
-		SelectionTime: time.Now().Format(time.RFC3339),
-		PassengerInfo: req.PassengerInfo,
-		// TODO: Add price information from seat data
-	}
-
-	response.Success = true
-	response.Message = fmt.Sprintf("Seat %s has been confirmed for your booking", req.SeatCode)
-	response.ConfirmedSeat = confirmedSeat
-	response.BookingRef = fmt.Sprintf("BC%d%s", req.FlightID, req.SeatCode) // Generate booking reference
-
-	s.logger.Info("Seat confirmed successfully",
-		zap.String("seatCode", req.SeatCode),
-		zap.Int64("flightId", req.FlightID),
-		zap.String("bookingRef", response.BookingRef))
 
 	return response, nil
 }

@@ -2,6 +2,7 @@ package repoiface
 
 import (
 	"context"
+	"database/sql"
 	"io"
 
 	"github.com/budsx/bookcabin/models"
@@ -22,6 +23,9 @@ type DBReadWriter interface {
 	ReadBookingFlightByID(ctx context.Context, flightNumber int64) (models.BookingFlight, error)
 	ReadBookingByID(ctx context.Context, bookingID int64) (models.Booking, error)
 	ReadSeatPricesBySeatIDs(ctx context.Context, seatIDs []int64) ([]models.SeatPrice, error)
+	ReadSeatsByCode(ctx context.Context, tx *sql.Tx, seatCode string) (models.Seat, error)
+	UpdateSeat(ctx context.Context, tx *sql.Tx, seat models.Seat) error
+	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
 	Ping(ctx context.Context) error
 	io.Closer
 }

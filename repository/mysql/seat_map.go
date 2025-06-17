@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -34,6 +35,12 @@ const (
 
 	selectSeatCodesBySeatRowID = `
 		SELECT DISTINCT storefront_slot_code FROM seats WHERE seat_row_id IN (%s)
+	`
+	selectSeatsByCode = `
+		SELECT id, code, available FROM seats WHERE code = ?
+	`
+	updateSeat = `
+		UPDATE seats SET available = ? WHERE id = ?
 	`
 )
 
@@ -291,6 +298,25 @@ func (d *dbReadWriter) ReadSeatCodesBySeatRowIDs(ctx context.Context, seatRowIDs
 	}
 
 	return seatCodes, nil
+}
+
+func (d *dbReadWriter) ReadSeatsByCode(ctx context.Context, tx *sql.Tx, seatCode string) (models.Seat, error) {
+	row := tx.QueryRowContext(ctx, selectSeatsByCode, seatCode)
+
+	var seat models.Seat
+	err := row.Scan(&seat.ID, &seat.Code, &seat.Available)
+	if err != nil {
+		return models.Seat{}, err
+	}
+	return seat, nil
+}
+
+func (d *dbReadWriter) UpdateSeat(ctx context.Context, tx *sql.Tx, seat models.Seat) error {
+	_, err := tx.ExecContext(ctx, updateSeat, seat.ID, seat.Available)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func buildInClause(length int) string {

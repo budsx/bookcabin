@@ -1,8 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/budsx/bookcabin/config"
 	"github.com/budsx/bookcabin/controller"
@@ -13,6 +18,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -35,7 +41,6 @@ func main() {
 		logger.WithError(err).Fatal("Failed to create repository")
 		return
 	}
-	defer repo.Close()
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -50,20 +55,52 @@ func main() {
 		MaxAge:           300,
 	}))
 
-	logger := logger.GetLogger()
-	bookCabinService := services.NewBookCabinService(repo, logger)
+	zapLogger := logger.GetLogger()
+	bookCabinService := services.NewBookCabinService(repo, zapLogger)
 	bookCabinController := controller.NewBookCabinController(bookCabinService)
 
 	r.Get("/api/v1/seat-map", bookCabinController.GetSeatMap)
-	// Hold Seat
 	r.Post("/api/v1/seat-map/select", bookCabinController.SelectSeat)
-	// Confirm Seat
-	r.Post("/api/v1/seat-map/confirm", bookCabinController.ConfirmSeat)
-
-	// Reset Seat for testing
-	// r.Get("/api/v1/seat-map/reset", bookCabinController.ResetSeat)
 
 	serverAddr := fmt.Sprintf(":%s", cfg.ServicePort)
 	logger.Info(fmt.Sprintf("Server is running on port %s", cfg.ServicePort))
-	http.ListenAndServe(serverAddr, r)
+
+	server := &http.Server{
+		Addr:    serverAddr,
+		Handler: r,
+	}
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error("Failed to start server", zap.Error(err))
+		}
+	}()
+
+	GracefulShutdown(server, repo)
+}
+
+func GracefulShutdown(server *http.Server, repo *repository.Repository) {
+	quit := make(chan os.Signal, 1)
+
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	<-quit
+	logger.Info("Shutdown signal received, shutting down gracefully...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		logger.Error("Server forced to shutdown", zap.Error(err))
+	} else {
+		logger.Info("HTTP server shutdown complete")
+	}
+
+	if err := repo.Close(); err != nil {
+		logger.Error("Failed to close repository connections", zap.Error(err))
+	} else {
+		logger.Info("Database connections closed")
+	}
+
+	logger.Info("Server shutdown complete")
 }

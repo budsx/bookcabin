@@ -64,3 +64,7 @@ func (d *dbReadWriter) rollbackTx(tx *sql.Tx) error {
 	}
 	return nil
 }
+
+func (d *dbReadWriter) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	return d.db.BeginTx(ctx, opts)
+}
