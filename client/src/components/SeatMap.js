@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import './SeatMap.css';
+import { seatMapService } from '../services/seatMapService';
 
-const SeatMap = ({ data }) => {
+const SeatMap = ({ data, flightId }) => {
   const [selectedSeat, setSelectedSeat] = useState(null);
   const [showSeatInfo, setShowSeatInfo] = useState(false);
   const [seatInfo, setSeatInfo] = useState(null);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionError, setSelectionError] = useState(null);
 
   const seatMapData = data?.seatsItineraryParts?.[0]?.segmentSeatMaps?.[0]?.passengerSeatMaps?.[0]?.seatMap;
   const cabin = seatMapData?.cabins?.[0];
@@ -100,6 +103,37 @@ const SeatMap = ({ data }) => {
     );
   };
 
+  const handleConfirmSelection = async () => {
+    if (!selectedSeat || !flightId) {
+      alert('Unable to confirm seat selection');
+      return;
+    }
+
+    setIsSelecting(true);
+    setSelectionError(null);
+
+    try {
+      const payload = {
+        flightId: flightId,
+        seatCode: selectedSeat,
+        passengerInfo: {
+          firstName: 'Rutwik',
+          lastName: 'Budhekar',
+        },
+      };
+
+      const result = await seatMapService.selectSeat(payload);
+      
+      alert(`Seat ${selectedSeat} successfully selected!`);
+      console.log('Seat selection result:', result);
+    } catch (error) {
+      setSelectionError(`Failed to select seat: ${error.message}`);
+      console.error('Seat selection error:', error);
+    } finally {
+      setIsSelecting(false);
+    }
+  };
+
   return (
     <div className="seat-map">
       <div className="aircraft-info">
@@ -149,15 +183,25 @@ const SeatMap = ({ data }) => {
       {selectedSeat && (
         <div className="selected-seat-info">
           <h4>Selected Seat: {selectedSeat}</h4>
+          {selectionError && (
+            <div className="error-message">
+              {selectionError}
+            </div>
+          )}
           <button 
             className="confirm-btn"
-            onClick={() => alert(`Seat ${selectedSeat} confirmed!`)}
+            onClick={handleConfirmSelection}
+            disabled={isSelecting}
           >
-            Confirm Selection
+            {isSelecting ? 'Confirming...' : 'Confirm Selection'}
           </button>
           <button 
             className="cancel-btn"
-            onClick={() => setSelectedSeat(null)}
+            onClick={() => {
+              setSelectedSeat(null);
+              setSelectionError(null);
+            }}
+            disabled={isSelecting}
           >
             Clear Selection
           </button>

@@ -22,18 +22,14 @@ export const seatMapService = {
     }
   },
 
-  async selectSeat(flightId, seatCode, passengerInfo) {
+  async selectSeat(payload) {
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/seat-map/select`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          flightId,
-          seatCode,
-          passengerInfo,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
