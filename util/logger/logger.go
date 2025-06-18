@@ -1,81 +1,111 @@
 package logger
 
 import (
+	"context"
+	"fmt"
 	"os"
+	"path"
+	"runtime"
 
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"github.com/sirupsen/logrus"
 )
 
-var Logger *zap.Logger
+var Logger *logrus.Logger
+
+// Context key for request ID
+type contextKey string
+
+const RequestIDKey contextKey = "request_id"
 
 func init() {
-	config := zap.NewProductionConfig()
-	config.Encoding = "json"
-	config.EncoderConfig.TimeKey = "timestamp"
-	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	config.EncoderConfig.CallerKey = "caller"
-	config.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
-	config.OutputPaths = []string{"stdout"}
-	config.ErrorOutputPaths = []string{"stdout"}
+	Logger = logrus.New()
+	Logger.SetOutput(os.Stdout)
+
+	Logger.SetFormatter(&logrus.JSONFormatter{
+		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+			filename := path.Base(f.File)
+			return "", fmt.Sprintf("%s:%d", filename, f.Line)
+		},
+	})
+	Logger.SetReportCaller(true)
 
 	level := os.Getenv("LOG_LEVEL")
 	switch level {
 	case "DEBUG":
-		config.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+		Logger.SetLevel(logrus.DebugLevel)
 	case "WARN":
-		config.Level = zap.NewAtomicLevelAt(zapcore.WarnLevel)
+		Logger.SetLevel(logrus.WarnLevel)
 	case "ERROR":
-		config.Level = zap.NewAtomicLevelAt(zapcore.ErrorLevel)
+		Logger.SetLevel(logrus.ErrorLevel)
 	case "FATAL":
-		config.Level = zap.NewAtomicLevelAt(zapcore.FatalLevel)
+		Logger.SetLevel(logrus.FatalLevel)
 	default:
-		config.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
-	}
-
-	var err error
-	Logger, err = config.Build()
-	if err != nil {
-		panic(err)
+		Logger.SetLevel(logrus.InfoLevel)
 	}
 }
 
-func GetLogger() *zap.Logger {
+func GetLogger() *logrus.Logger {
 	return Logger
 }
 
-func WithField(key string, value interface{}) *zap.Logger {
-	return Logger.With(zap.Any(key, value))
-}
-
-func WithFields(fields map[string]interface{}) *zap.Logger {
-	zapFields := make([]zap.Field, 0, len(fields))
-	for k, v := range fields {
-		zapFields = append(zapFields, zap.Any(k, v))
+// WithRequestID returns a logger entry with request ID from context
+func WithRequestID(ctx context.Context) *logrus.Entry {
+	if requestID := ctx.Value(RequestIDKey); requestID != nil {
+		return Logger.WithField("request_id", requestID)
 	}
-	return Logger.With(zapFields...)
+	return Logger.WithField("request_id", "")
 }
 
-func WithError(err error) *zap.Logger {
-	return Logger.With(zap.Error(err))
+func WithField(key string, value interface{}) *logrus.Entry {
+	return Logger.WithField(key, value)
 }
 
-func Info(msg string, fields ...zap.Field) {
-	Logger.Info(msg, fields...)
+func WithFields(fields map[string]interface{}) *logrus.Entry {
+	return Logger.WithFields(logrus.Fields(fields))
 }
 
-func Debug(msg string, fields ...zap.Field) {
-	Logger.Debug(msg, fields...)
+func WithError(err error) *logrus.Entry {
+	return Logger.WithError(err)
 }
 
-func Warn(msg string, fields ...zap.Field) {
-	Logger.Warn(msg, fields...)
+// Context-aware logging functions
+func InfoCtx(ctx context.Context, msg string) {
+	WithRequestID(ctx).Info(msg)
 }
 
-func Error(msg string, fields ...zap.Field) {
-	Logger.Error(msg, fields...)
+func DebugCtx(ctx context.Context, msg string) {
+	WithRequestID(ctx).Debug(msg)
 }
 
-func Fatal(msg string, fields ...zap.Field) {
-	Logger.Fatal(msg, fields...)
+func WarnCtx(ctx context.Context, msg string) {
+	WithRequestID(ctx).Warn(msg)
+}
+
+func ErrorCtx(ctx context.Context, msg string) {
+	WithRequestID(ctx).Error(msg)
+}
+
+func FatalCtx(ctx context.Context, msg string) {
+	WithRequestID(ctx).Fatal(msg)
+}
+
+// Legacy functions (without context)
+func Info(msg string) {
+	Logger.Info(msg)
+}
+
+func Debug(msg string) {
+	Logger.Debug(msg)
+}
+
+func Warn(msg string) {
+	Logger.Warn(msg)
+}
+
+func Error(msg string) {
+	Logger.Error(msg)
+}
+
+func Fatal(msg string) {
+	Logger.Fatal(msg)
 }

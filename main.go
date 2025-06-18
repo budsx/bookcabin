@@ -13,15 +13,16 @@ import (
 	"github.com/budsx/bookcabin/controller"
 	"github.com/budsx/bookcabin/repository"
 	"github.com/budsx/bookcabin/services"
-	"github.com/budsx/bookcabin/util/logger"
 
+	logger "github.com/budsx/bookcabin/util/logger"
+	requestidmiddleware "github.com/budsx/bookcabin/util/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"go.uber.org/zap"
 )
 
 func main() {
+	logger := logger.GetLogger()
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to load config")
@@ -43,6 +44,7 @@ func main() {
 	}
 
 	r := chi.NewRouter()
+	r.Use(requestidmiddleware.RequestIDMiddleware)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
@@ -55,8 +57,7 @@ func main() {
 		MaxAge:           300,
 	}))
 
-	zapLogger := logger.GetLogger()
-	bookCabinService := services.NewBookCabinService(repo, zapLogger)
+	bookCabinService := services.NewBookCabinService(repo, logger)
 	bookCabinController := controller.NewBookCabinController(bookCabinService)
 
 	r.Get("/api/v1/seat-map", bookCabinController.GetSeatMap)
@@ -72,7 +73,7 @@ func main() {
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Error("Failed to start server", zap.Error(err))
+			logger.WithError(err).Error("Failed to start server")
 		}
 	}()
 
@@ -91,13 +92,13 @@ func GracefulShutdown(server *http.Server, repo *repository.Repository) {
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		logger.Error("Server forced to shutdown", zap.Error(err))
+		logger.WithError(err).Error("Server forced to shutdown")
 	} else {
 		logger.Info("HTTP server shutdown complete")
 	}
 
 	if err := repo.Close(); err != nil {
-		logger.Error("Failed to close repository connections", zap.Error(err))
+		logger.WithError(err).Error("Failed to close repository connections")
 	} else {
 		logger.Info("Database connections closed")
 	}

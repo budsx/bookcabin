@@ -2,14 +2,14 @@ package services
 
 import (
 	"github.com/budsx/bookcabin/repository"
-	"go.uber.org/zap"
+	"github.com/sirupsen/logrus"
 )
 
 type BookCabinService struct {
 	repo   *repository.Repository
-	logger *zap.Logger
+	logger *logrus.Logger
 }
 
-func NewBookCabinService(repo *repository.Repository, logger *zap.Logger) *BookCabinService {
+func NewBookCabinService(repo *repository.Repository, logger *logrus.Logger) *BookCabinService {
 	return &BookCabinService{repo: repo, logger: logger}
 }

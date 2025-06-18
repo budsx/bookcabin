@@ -6,8 +6,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-
-	"github.com/budsx/bookcabin/util/logger"
+	"github.com/sirupsen/logrus"
 )
 
 type dbReadWriter struct {
@@ -24,7 +23,7 @@ type DBConfig struct {
 func NewDBReadWriter(dbConfig *DBConfig) (*dbReadWriter, error) {
 	db, err := sql.Open("mysql", dbConfig.SchemaURL)
 	if err != nil {
-		logger.WithError(err).Error("Failed to connect to MySQL")
+		logrus.WithError(err).Error("Failed to connect to MySQL")
 		return nil, err
 	}
 
@@ -34,7 +33,7 @@ func NewDBReadWriter(dbConfig *DBConfig) (*dbReadWriter, error) {
 
 	err = db.Ping()
 	if err != nil {
-		logger.WithError(err).Error("Failed to ping MySQL database")
+		logrus.WithError(err).Error("Failed to ping MySQL database")
 		db.Close()
 		return nil, err
 	}

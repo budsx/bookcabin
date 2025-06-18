@@ -4,8 +4,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-
-	"github.com/budsx/bookcabin/util/logger"
+	"github.com/sirupsen/logrus"
 )
 
 type Config struct {
@@ -20,7 +19,7 @@ type Config struct {
 func LoadConfig() (*Config, error) {
 	err := godotenv.Load()
 	if err != nil {
-		logger.WithError(err).Error("Failed to load .env file")
+		logrus.WithError(err).Error("Failed to load .env file")
 		return nil, err
 	}
 
