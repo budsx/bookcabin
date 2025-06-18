@@ -12,7 +12,6 @@ import (
 
 var Logger *logrus.Logger
 
-// Context key for request ID
 type contextKey string
 
 const RequestIDKey contextKey = "request_id"
@@ -44,7 +43,8 @@ func init() {
 	}
 }
 
-func GetLogger() *logrus.Logger {
+func GetLogger(ctx context.Context) *logrus.Logger {
+	Logger.WithField("request_id", ctx.Value(RequestIDKey))
 	return Logger
 }
 
@@ -89,7 +89,6 @@ func FatalCtx(ctx context.Context, msg string) {
 	WithRequestID(ctx).Fatal(msg)
 }
 
-// Legacy functions (without context)
 func Info(msg string) {
 	Logger.Info(msg)
 }

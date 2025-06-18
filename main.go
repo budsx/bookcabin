@@ -22,7 +22,7 @@ import (
 )
 
 func main() {
-	logger := logger.GetLogger()
+	logger := logger.GetLogger(context.Background())
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to load config")
