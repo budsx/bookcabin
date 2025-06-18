@@ -104,6 +104,7 @@ const SeatMap = ({ data, flightId }) => {
   };
 
   const handleConfirmSelection = async () => {
+    console.log('handleConfirmSelection', selectedSeat, flightId);
     if (!selectedSeat || !flightId) {
       alert('Unable to confirm seat selection');
       return;

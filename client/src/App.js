@@ -6,12 +6,12 @@ import { seatMapService } from './services/seatMapService';
 function App() {
   const [seatMapData, setSeatMapData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [flightId, setFlightId] = useState(312); // HARDCODED FLIGHT ID FOR NOW
 
   useEffect(() => {
     const fetchSeatMapData = async () => {
       try {
-        // HARDCODED FLIGHT ID FOR NOW
-        const seatMapData = await seatMapService.fetchSeatMap(312);
+        const seatMapData = await seatMapService.fetchSeatMap(flightId);
         console.log(seatMapData);
 
         setSeatMapData(seatMapData);
@@ -23,7 +23,7 @@ function App() {
     };
 
     fetchSeatMapData();
-  }, []);
+  }, [flightId]);
 
   if (loading) {
     return (
@@ -41,7 +41,7 @@ function App() {
       </header>
       
       <main className="seat-map-container">
-        {seatMapData && <SeatMap data={seatMapData} />}
+        {seatMapData && <SeatMap data={seatMapData} flightId={flightId} />}
       </main>
     </div>
   );

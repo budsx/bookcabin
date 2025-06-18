@@ -302,6 +302,11 @@ func (s *BookCabinService) SelectSeat(ctx context.Context, req dto.SeatSelection
 		return response, dto.ErrSeatNotAvailable
 	}
 
+	s.logger.Info("READ SEAT FROM DB",
+		zap.String("seatCode", seat.Code),
+		zap.Int64("seatID", seat.ID),
+		zap.Bool("available", seat.Available))
+
 	if !seat.Available {
 		s.logger.Warn("Seat is not available", zap.String("seatCode", req.SeatCode))
 		return response, dto.ErrSeatNotAvailable
@@ -309,6 +314,11 @@ func (s *BookCabinService) SelectSeat(ctx context.Context, req dto.SeatSelection
 
 	// Update Seat
 	seat.Available = false
+	s.logger.Info("UPDATING SEAT TO UNAVAILABLE",
+		zap.String("seatCode", seat.Code),
+		zap.Int64("seatID", seat.ID),
+		zap.Bool("newAvailable", seat.Available))
+
 	err = s.repo.DBReadWriter.UpdateSeat(ctx, tx, seat)
 	if err != nil {
 		s.logger.Error("Failed to update seat", zap.Error(err), zap.Int64("seatId", seat.ID))
@@ -321,6 +331,8 @@ func (s *BookCabinService) SelectSeat(ctx context.Context, req dto.SeatSelection
 		s.logger.Error("Failed to commit transaction", zap.Error(err))
 		return response, dto.ErrSeatNotAvailable
 	}
+
+	s.logger.Info("TRANSACTION COMMITTED SUCCESSFULLY", zap.String("seatCode", req.SeatCode))
 
 	selectedSeat := &dto.SelectedSeat{
 		FlightID:      req.FlightID,

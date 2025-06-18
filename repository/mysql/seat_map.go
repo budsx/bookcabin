@@ -40,7 +40,7 @@ const (
 		SELECT id, code, available FROM seats WHERE code = ?
 	`
 	updateSeat = `
-		UPDATE seats SET available = ? WHERE id = ?
+		UPDATE seats SET available = ?, originally_selected = 1 WHERE id = ?
 	`
 )
 
@@ -312,10 +312,22 @@ func (d *dbReadWriter) ReadSeatsByCode(ctx context.Context, tx *sql.Tx, seatCode
 }
 
 func (d *dbReadWriter) UpdateSeat(ctx context.Context, tx *sql.Tx, seat models.Seat) error {
-	_, err := tx.ExecContext(ctx, updateSeat, seat.ID, seat.Available)
+	result, err := tx.ExecContext(ctx, updateSeat, seat.Available, seat.ID)
 	if err != nil {
+		fmt.Printf("ERROR updating seat: %v\n", err)
 		return err
 	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		fmt.Printf("ERROR getting rows affected: %v\n", err)
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no rows affected when updating seat ID %d", seat.ID)
+	}
+
 	return nil
 }
 
