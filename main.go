@@ -49,7 +49,10 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{
-			"http://localhost:3000",
+			"http://localhost",
+			"http://localhost:80",
+			"http://127.0.0.1",
+			"http://127.0.0.1:80",
 		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"*"},

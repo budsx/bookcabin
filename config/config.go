@@ -17,10 +17,11 @@ type Config struct {
 }
 
 func LoadConfig() (*Config, error) {
+	// Try to load .env file, but don't fail if it doesn't exist
+	// This allows the app to work both with .env files (local dev) and without (Docker)
 	err := godotenv.Load()
 	if err != nil {
-		logrus.WithError(err).Error("Failed to load .env file")
-		return nil, err
+		logrus.WithError(err).Warn("No .env file found, using environment variables")
 	}
 
 	servicePort := os.Getenv("SERVICE_PORT")
